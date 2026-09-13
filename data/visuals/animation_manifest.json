@@ -1,0 +1,202 @@
+{
+  "target_style": "high-resolution 2D dark fantasy",
+  "champions": {
+    "warrior": {
+      "states": [
+        "idle",
+        "run",
+        "jump",
+        "fall",
+        "wall_slide",
+        "dash",
+        "attack_1",
+        "attack_2",
+        "attack_3",
+        "heavy",
+        "bash",
+        "whirlwind",
+        "hurt",
+        "death",
+        "ultimate"
+      ]
+    },
+    "mage": {
+      "states": [
+        "idle",
+        "run",
+        "jump",
+        "fall",
+        "wall_slide",
+        "blink",
+        "cast",
+        "charge",
+        "nova",
+        "wave",
+        "hurt",
+        "death",
+        "meteor"
+      ]
+    },
+    "rogue": {
+      "states": [
+        "idle",
+        "run",
+        "jump",
+        "double_jump",
+        "fall",
+        "wall_slide",
+        "dash",
+        "attack_1",
+        "attack_2",
+        "attack_3",
+        "attack_4",
+        "backstab",
+        "smoke_step",
+        "fan",
+        "hurt",
+        "death",
+        "shadow_dance"
+      ]
+    },
+    "paladin": {
+      "states": [
+        "idle",
+        "run",
+        "jump",
+        "fall",
+        "wall_slide",
+        "dash",
+        "attack_1",
+        "attack_2",
+        "attack_3",
+        "smite",
+        "guard",
+        "perfect_guard",
+        "nova",
+        "hurt",
+        "death",
+        "judgment"
+      ]
+    },
+    "archer": {
+      "states": [
+        "idle",
+        "run",
+        "jump",
+        "fall",
+        "wall_slide",
+        "vault",
+        "quick_shot",
+        "power_shot",
+        "piercing_arrow",
+        "arrow_rain",
+        "hurt",
+        "death",
+        "perfect_volley"
+      ]
+    },
+    "barbarian": {
+      "states": [
+        "idle",
+        "run",
+        "jump",
+        "fall",
+        "wall_slide",
+        "reckless_leap",
+        "attack_1",
+        "attack_2",
+        "attack_3",
+        "heavy",
+        "ground_slam",
+        "berserk",
+        "hurt",
+        "death",
+        "worldbreaker"
+      ]
+    },
+    "fighter": {
+      "states": [
+        "idle",
+        "run",
+        "jump",
+        "fall",
+        "wall_slide",
+        "combat_roll",
+        "attack_1",
+        "attack_2",
+        "attack_3",
+        "heavy",
+        "parry",
+        "counter",
+        "riposte",
+        "hurt",
+        "death",
+        "relentless_assault"
+      ]
+    },
+    "monk": {
+      "states": [
+        "idle",
+        "run",
+        "jump",
+        "fall",
+        "wall_slide",
+        "wind_step",
+        "attack_1",
+        "attack_2",
+        "attack_3",
+        "attack_4",
+        "palm",
+        "flurry",
+        "inner_peace",
+        "hurt",
+        "death",
+        "hundred_hands"
+      ]
+    },
+    "ranger": {
+      "states": [
+        "idle",
+        "run",
+        "jump",
+        "fall",
+        "wall_slide",
+        "trail_step",
+        "shot",
+        "marked_shot",
+        "sweep",
+        "aimed_shot",
+        "nature_favor",
+        "hurt",
+        "death",
+        "predators_focus"
+      ]
+    },
+    "cleric": {
+      "states": [
+        "idle",
+        "run",
+        "jump",
+        "fall",
+        "wall_slide",
+        "sanctified_step",
+        "attack_1",
+        "attack_2",
+        "attack_3",
+        "holy_bolt",
+        "smite",
+        "rejuvenation",
+        "hurt",
+        "death",
+        "divine_intervention"
+      ]
+    }
+  },
+  "recommended_base_frame": [
+    96,
+    96
+  ],
+  "pivot": "feet-center",
+  "facing": "right",
+  "notes": "Gameplay timing remains authoritative. Art should match attack windows rather than redefine them."
+}

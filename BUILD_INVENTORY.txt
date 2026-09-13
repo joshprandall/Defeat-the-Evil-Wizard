@@ -1,0 +1,75 @@
+Defeat the Evil Wizard — Fallen Village 0.4
+
+Core:
+- Godot 4.7.2 project
+- Warrior and Mage playable champions
+- Fallen Village authored region
+- Arcane Shard collectible system
+- Grave Knight miniboss
+- Evil Wizard three-phase boss
+- two checkpoint shrines
+- campaign objective HUD
+- keyboard and controller input
+- procedural audio and presentation foundation
+
+New scripts in 0.4:
+- scripts/arcane_shard.gd
+- scripts/grave_knight.gd
+- scripts/village_prop.gd
+
+Updated in 0.4:
+- scripts/game.gd
+- scripts/player.gd
+- scripts/hud.gd
+- scripts/backdrop.gd
+- scripts/combat_math.gd
+- tests/test_runner.gd
+- README.md
+- docs/ROADMAP.md
+
+0.5 additions: SaveSystem, StoryNPC, MovementLab scene/script, shrine progression UI, exact shard persistence, ranged Wisp behavior.
+
+0.6 additions: Rogue champion, HeroEcho afterimages, named animation-state pipeline, input buffering, responsive reversal acceleration, Rogue double jump, enhanced Movement Lab.
+
+0.7 additions: Paladin champion, Whispering Woods region, woods backdrop/props, forest enemy family, Briar Hart boss, third shrine/checkpoint, animation production manifest.
+
+0.8 additions: Archer champion, Sunken Keep region, moving platforms, keep traps, Drowned Guard/Rune Caster/Crypt Leech, Drowned Castellan boss, fourth checkpoint, Resilience/Devotion shrine blessings.
+
+v1.0 additions: CinematicDirector/CinematicArt, five story sequences, Memory Labyrinth, Bell→Moon→Crown rune puzzle, MemoryGate, labyrinth/mountain backdrops, refined hero motion/details, stage-5 checkpoint persistence, two-line control guide.
+
+v1.0.1 additions: 9 original music cues, 14 new SFX, contextual music fading, Archer/Paladin/puzzle/trap/cinematic audio integration, audio manifest.
+
+v1.1 additions: Blighted Mountains, Storm Vane puzzle, sixth champion Barbarian, Ash Hound/Storm Shaman/Stone Raider, Ash Colossus boss, sixth shrine + Renewal, 7 new mountain/Barbarian SFX.
+
+v1.2 additions: Black Tower Lower Spire, Arcane elevators, phase platforms, Mirror Vault puzzle, seventh champion Fighter, Void Sentry/Arcane Eye/Shadow Knight, Obsidian Warden, seventh shrine + Steadfast, 2 music cues, 7 SFX.
+
+v1.3 additions: Crown Chamber, eighth champion Monk, Ascension blessing, True Evil Wizard four-phase finale, Crown Sigils, final checkpoint, ending/conditional shard epilogue, 3 music cues, 9 SFX.
+
+v1.3.1 additions: Storm Vane readability patch, 175px interaction radius, world-space E beacon, correct-state check mark, contextual puzzle tracker, compact bottom controls footer, high-contrast interaction panel.
+
+v1.4 additions: Ranger + Cleric playable, 10-champion roster, paged 5-per-page Champion Select, Movement Lab 9/0 shortcuts, Ranger/Cleric cinematics and visuals, 5 new SFX, Might temporary-buff compatibility fix.
+
+v1.4.2 additions: safe NPC-dialogue world freeze, enemy/boss/projectile/hazard freeze during conversation, pause-menu guard, 0.45s post-dialogue invulnerability.
+
+
+v2.0 COMPLETE ROUGH DRAFT:
+- 15/15 playable classes
+- Bard, Druid, Sorcerer, Warlock, Wizard complete kits
+- 360-degree mouse/right-stick aim
+- mouse light/heavy attack
+- directional melee and projectile attacks
+- crouch/squat with smaller collision capsule
+- crouch-dash slide
+- low crawl tunnels
+- Bellkeeper Undercrypt
+- Whispering Woods Rootway
+- Sunken Keep Drowned Aqueduct
+- Blighted Mountains Ashen Caves
+- Black Tower Rift Gallery
+- paired portals and tunnels
+- interactive levers and shortcut gates
+- Story/Adventurer/Legend damage profiles
+- all previous story, puzzles, bosses, save/continue, shrines, ending retained
+- final visual-production pass intentionally deferred
+
+v2.0.1: Champion Select pagination rebuilt into three independent grids; compact non-overlapping arrow navigation.

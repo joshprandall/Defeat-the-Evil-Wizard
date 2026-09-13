@@ -1,0 +1,215 @@
+{
+  "schema_version": 2,
+  "classes": [
+    {
+      "id": "warrior",
+      "name": "Warrior",
+      "role": "frontline bruiser",
+      "health": 160,
+      "attack": 18,
+      "passive": "Iron Resolve",
+      "movement": "Shoulder Rush",
+      "abilities": [
+        "Shield Bash",
+        "Whirlwind"
+      ],
+      "ultimate": "Last Stand"
+    },
+    {
+      "id": "mage",
+      "name": "Mage",
+      "role": "ranged control",
+      "health": 105,
+      "attack": 26,
+      "passive": "Arcane Recovery",
+      "movement": "Blink",
+      "abilities": [
+        "Frost Nova",
+        "Flame Wave"
+      ],
+      "ultimate": "Meteor"
+    },
+    {
+      "id": "archer",
+      "name": "Archer",
+      "role": "mobile ranged precision",
+      "health": 116,
+      "attack": 21,
+      "passive": "Deadeye Focus",
+      "movement": "Vault",
+      "abilities": [
+        "Piercing Arrow",
+        "Arrow Rain"
+      ],
+      "ultimate": "Perfect Volley"
+    },
+    {
+      "id": "paladin",
+      "name": "Paladin",
+      "role": "guard, sustain, and radiant control",
+      "health": 178,
+      "attack": 19,
+      "passive": "Faith Through Guarding",
+      "movement": "Righteous Dash",
+      "abilities": [
+        "Divine Guard",
+        "Sacred Nova"
+      ],
+      "ultimate": "Judgment"
+    },
+    {
+      "id": "barbarian",
+      "name": "Barbarian",
+      "role": "high-risk heavy melee",
+      "health": 194,
+      "attack": 24,
+      "passive": "Blood Rage",
+      "movement": "Reckless Leap",
+      "abilities": [
+        "Ground Slam",
+        "Berserk"
+      ],
+      "ultimate": "Worldbreaker"
+    },
+    {
+      "id": "bard",
+      "name": "Bard",
+      "role": "tempo and control",
+      "health": 110,
+      "attack": 16,
+      "passive": "Perfect Timing",
+      "movement": "Stage Dive",
+      "abilities": [
+        "Discordant Chord",
+        "Rallying Chorus"
+      ],
+      "ultimate": "Finale"
+    },
+    {
+      "id": "cleric",
+      "name": "Cleric",
+      "role": "sustain/holy burst",
+      "health": 148,
+      "attack": 17,
+      "passive": "Grace",
+      "movement": "Sanctified Step",
+      "abilities": [
+        "Smite",
+        "Rejuvenation"
+      ],
+      "ultimate": "Divine Intervention"
+    },
+    {
+      "id": "druid",
+      "name": "Druid",
+      "role": "adaptable control",
+      "health": 125,
+      "attack": 18,
+      "passive": "Wild Growth",
+      "movement": "Wild Shape",
+      "abilities": [
+        "Entangle",
+        "Storm Brew"
+      ],
+      "ultimate": "Avatar of the Grove"
+    },
+    {
+      "id": "fighter",
+      "name": "Fighter",
+      "role": "technical melee",
+      "health": 152,
+      "attack": 22,
+      "passive": "Counterstance",
+      "movement": "Combat Roll",
+      "abilities": [
+        "Parry",
+        "Riposte"
+      ],
+      "ultimate": "Relentless Assault"
+    },
+    {
+      "id": "monk",
+      "name": "Monk",
+      "role": "speed/combo",
+      "health": 124,
+      "attack": 20,
+      "passive": "Flow",
+      "movement": "Wind Step",
+      "abilities": [
+        "Flurry",
+        "Inner Peace"
+      ],
+      "ultimate": "Hundred Hands"
+    },
+    {
+      "id": "ranger",
+      "name": "Ranger",
+      "role": "hybrid hunter",
+      "health": 132,
+      "attack": 20,
+      "passive": "Marked Quarry",
+      "movement": "Trail Step",
+      "abilities": [
+        "Aimed Shot",
+        "Nature's Favor"
+      ],
+      "ultimate": "Predator's Focus"
+    },
+    {
+      "id": "rogue",
+      "name": "Rogue",
+      "role": "burst mobility and evasion",
+      "health": 104,
+      "attack": 23,
+      "passive": "Shadow Momentum",
+      "movement": "Smoke Step",
+      "abilities": [
+        "Smoke Step",
+        "Fan of Knives"
+      ],
+      "ultimate": "Shadow Dance"
+    },
+    {
+      "id": "sorcerer",
+      "name": "Sorcerer",
+      "role": "volatile spell damage",
+      "health": 100,
+      "attack": 27,
+      "passive": "Overcharge",
+      "movement": "Arc Step",
+      "abilities": [
+        "Lightning Bolt",
+        "Frost Nova"
+      ],
+      "ultimate": "Arcane Cataclysm"
+    },
+    {
+      "id": "warlock",
+      "name": "Warlock",
+      "role": "drain and curses",
+      "health": 112,
+      "attack": 25,
+      "passive": "Soul Harvest",
+      "movement": "Umbral Gate",
+      "abilities": [
+        "Soul Drain",
+        "Curse"
+      ],
+      "ultimate": "Infernal Pact"
+    },
+    {
+      "id": "wizard",
+      "name": "Wizard",
+      "role": "precision spellcraft",
+      "health": 98,
+      "attack": 28,
+      "passive": "Prepared Mind",
+      "movement": "Teleport",
+      "abilities": [
+        "Magic Missile",
+        "Time Warp"
+      ],
+      "ultimate": "Arcane Singularity"
+    }
+  ]
+}

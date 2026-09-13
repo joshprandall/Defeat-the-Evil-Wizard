@@ -1,0 +1,106 @@
+{
+  "version": "1.4",
+  "music": {
+    "title_theme": {
+      "context": "title / champion select",
+      "file": "audio/music/title_theme.wav"
+    },
+    "fallen_village_theme": {
+      "context": "Fallen Village / Black Road exploration",
+      "file": "audio/music/fallen_village_theme.wav"
+    },
+    "whispering_woods_theme": {
+      "context": "Whispering Woods exploration",
+      "file": "audio/music/whispering_woods_theme.wav"
+    },
+    "sunken_keep_theme": {
+      "context": "Sunken Keep exploration",
+      "file": "audio/music/sunken_keep_theme.wav"
+    },
+    "memory_labyrinth_theme": {
+      "context": "Memory Labyrinth / puzzle exploration",
+      "file": "audio/music/memory_labyrinth_theme.wav"
+    },
+    "boss_battle_theme": {
+      "context": "Grave Knight, Briar Hart, Drowned Castellan",
+      "file": "audio/music/boss_battle_theme.wav"
+    },
+    "evil_wizard_theme": {
+      "context": "Evil Wizard shadow encounter",
+      "file": "audio/music/evil_wizard_theme.wav"
+    },
+    "cinematic_theme": {
+      "context": "story cutscenes / interludes",
+      "file": "audio/music/cinematic_theme.wav"
+    },
+    "blighted_mountains_theme": {
+      "context": "mountain vista / future region teaser",
+      "file": "audio/music/blighted_mountains_theme.wav"
+    },
+    "black_tower_theme": {
+      "context": "Black Tower / Lower Spire exploration",
+      "file": "audio/music/black_tower_theme.wav"
+    },
+    "tower_warden_theme": {
+      "context": "Obsidian Warden battle",
+      "file": "audio/music/tower_warden_theme.wav"
+    },
+    "crown_chamber_theme": {
+      "context": "Crown Chamber approach and final arena",
+      "file": "audio/music/crown_chamber_theme.wav"
+    },
+    "true_wizard_theme": {
+      "context": "True Evil Wizard final battle",
+      "file": "audio/music/true_wizard_theme.wav"
+    },
+    "ending_theme": {
+      "context": "epilogue / victory",
+      "file": "audio/music/ending_theme.wav"
+    }
+  },
+  "new_sfx": [
+    "ui_confirm",
+    "cinematic_advance",
+    "bell_chime",
+    "rune_correct",
+    "rune_wrong",
+    "gate_open",
+    "bow_shot",
+    "arrow_hit",
+    "guard",
+    "perfect_guard",
+    "water_splash",
+    "trap_spike",
+    "crusher",
+    "boss_sting",
+    "wind_gust",
+    "rock_crack",
+    "rock_break",
+    "ground_slam",
+    "stone_roar",
+    "axe_swing",
+    "rock_impact",
+    "phase_shift",
+    "mirror_turn",
+    "mirror_lock",
+    "void_pulse",
+    "combat_roll",
+    "blade_clash",
+    "riposte",
+    "crown_seal",
+    "sigil_shatter",
+    "true_cast",
+    "mortal_spell",
+    "final_sting",
+    "final_defeat",
+    "monk_strike",
+    "inner_peace",
+    "wind_step",
+    "hunt_mark",
+    "nature_favor",
+    "cleric_smite",
+    "rejuvenate",
+    "divine_intervention"
+  ],
+  "notes": "Roster Expansion adds dedicated Ranger mark/nature feedback and Cleric holy/healing effects while preserving the 14-cue campaign soundtrack."
+}
