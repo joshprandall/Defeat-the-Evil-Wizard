@@ -12,6 +12,7 @@ func _ready() -> void:
     process_mode = Node.PROCESS_MODE_PAUSABLE
 
 func _process(delta: float) -> void:
+    var had_motes: bool = not motes.is_empty()
     for i in range(motes.size() - 1, -1, -1):
         var mote: Dictionary = motes[i]
         mote["life"] = float(mote["life"]) - delta
@@ -44,7 +45,8 @@ func _process(delta: float) -> void:
     else:
         footfall_clock = 0.0
 
-    if not motes.is_empty():
+    # One final redraw erases particles on the frame they expire.
+    if had_motes or not motes.is_empty():
         queue_redraw()
 
 func _on_flash(at: Vector2, tint: Color) -> void:
