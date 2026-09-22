@@ -5,6 +5,7 @@ extends Node
 # Only explicit messages from our own parent frame are forwarded as Input Map actions.
 const CHANNEL := "evil-wizard-console/v1"
 const ALLOWED := ["move_left", "move_right", "move_down", "jump", "attack", "heavy_attack", "dash", "interact", "ability_one", "ability_two", "ultimate"]
+const CHAMPIONS := ["warrior", "mage", "rogue", "paladin", "archer", "barbarian", "fighter", "monk", "ranger", "cleric", "bard", "druid", "sorcerer", "warlock", "wizard"]
 
 var _js_callback: JavaScriptObject
 var _console_active := false
@@ -67,6 +68,9 @@ func _receive_payload(payload: Dictionary) -> void:
     if str(payload.get("kind", "")) == "reset":
         _release_all()
         return
+    if str(payload.get("kind", "")) == "start":
+        _start_champion(str(payload.get("hero_class", "")))
+        return
     if str(payload.get("kind", "")) != "button":
         return
     var action: String = str(payload.get("action", ""))
@@ -92,6 +96,17 @@ func _receive_payload(payload: Dictionary) -> void:
         # A delayed release from another button must not cancel this action.
         if _held.get(pointer, "") == action:
             _release_pointer(pointer)
+
+func _start_champion(champion: String) -> void:
+    if champion not in CHAMPIONS:
+        return
+    var scene: Node = get_tree().current_scene
+    if scene == null or scene.name != "Game":
+        return
+    var game_hud: GameHUD = scene.get("hud") as GameHUD
+    if game_hud == null or not game_hud.title_overlay.visible:
+        return
+    game_hud.start_requested.emit(champion)
 
 func _game_is_playing() -> bool:
     var scene: Node = get_tree().current_scene
