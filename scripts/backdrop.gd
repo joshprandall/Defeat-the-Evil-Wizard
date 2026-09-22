@@ -8,6 +8,8 @@ func _ready() -> void:
     queue_redraw()
 
 func _draw() -> void:
+    # Separating sky, far mountains, and nearby ruins makes the side-scrolling
+    # path easier to read on small screens without changing collision or light.
     draw_rect(Rect2(0,-500,world_width,1300),Color("#07101b"))
     draw_rect(Rect2(0,120,world_width,600),Color(0.035,0.055,0.082,0.42))
     draw_rect(Rect2(0,330,world_width,390),Color(0.055,0.067,0.085,0.42))
@@ -20,6 +22,9 @@ func _draw() -> void:
         draw_circle(p,2.0,Color(0.78,0.84,0.88,0.50))
     draw_line(Vector2(0,205),Vector2(world_width,205),Color(0.20,0.28,0.39,0.14),2.0)
 
+    # A subtle halo gives the late-village moon its own depth plane.
+    draw_circle(Vector2(7280,92),177.0,Color(0.66,0.73,0.83,0.025))
+    draw_circle(Vector2(7280,92),150.0,Color(0.66,0.73,0.83,0.045))
     draw_circle(Vector2(7280,92),128.0,Color("#d9dbc9"))
     draw_circle(Vector2(7335,61),124.0,Color("#07101b"))
 
@@ -29,22 +34,31 @@ func _draw() -> void:
         Vector2(5500,520),Vector2(6100,245),Vector2(6750,510),Vector2(7350,255),Vector2(8200,520),
         Vector2(8200,720),Vector2(0,720)
     ])
-    draw_colored_polygon(far,Color("#152433"))
+    draw_colored_polygon(far,Color("#18283a"))
     var near: PackedVector2Array = PackedVector2Array([
         Vector2(0,610),Vector2(380,410),Vector2(760,590),Vector2(1120,360),Vector2(1520,610),
         Vector2(2100,390),Vector2(2520,610),Vector2(3000,380),Vector2(3520,610),Vector2(3980,350),
         Vector2(4450,610),Vector2(4900,400),Vector2(5400,590),Vector2(5960,370),Vector2(6480,610),
         Vector2(7060,390),Vector2(7580,610),Vector2(8200,410),Vector2(8200,720),Vector2(0,720)
     ])
-    draw_colored_polygon(near,Color("#101c29"))
+    draw_colored_polygon(near,Color("#101b29"))
 
-    # Fallen Village skyline.
+    # Fallen Village skyline: roof highlights keep the ruins distinct from
+    # mountains; sparse warm windows hint at the occupied road ahead.
     for x: float in [420.0,760.0,1080.0,1460.0,1830.0,2240.0,2670.0,3120.0,3560.0,3970.0,4380.0,4780.0,5180.0]:
         var height: float = 95.0 + fmod(x,170.0) * 0.22
         draw_rect(Rect2(x,610.0-height,150.0,height),Color("#111923"))
         draw_polygon(PackedVector2Array([Vector2(x-12.0,610.0-height),Vector2(x+75.0,565.0-height),Vector2(x+162.0,610.0-height)]),PackedColorArray([Color("#0e151e")]))
+        draw_line(Vector2(x-12.0,610.0-height),Vector2(x+75.0,565.0-height),Color(0.28,0.39,0.47,0.28),2.0)
         draw_rect(Rect2(x+24.0,540.0-height,20.0,28.0),Color("#251d2a"))
         draw_rect(Rect2(x+94.0,530.0-height,22.0,30.0),Color("#251d2a"))
+
+    for x: float in [760.0,1830.0,2670.0,3970.0,4780.0]:
+        var height: float = 95.0 + fmod(x,170.0) * 0.22
+        var window_at := Vector2(x+35.0,552.0-height)
+        draw_circle(window_at,38.0,Color(0.93,0.52,0.23,0.035))
+        draw_rect(Rect2(window_at-Vector2(8.0,11.0),Vector2(16.0,22.0)),Color(0.94,0.53,0.25,0.67))
+        draw_line(window_at+Vector2(0.0,-11.0),window_at+Vector2(0.0,11.0),Color("#32261f"),2.0)
 
     # Ruined bell tower marks the village center.
     draw_rect(Rect2(3270,315,120,305),Color("#0f1720"))
@@ -52,11 +66,14 @@ func _draw() -> void:
     draw_circle(Vector2(3330,355),24,Color("#1d2026"))
     draw_line(Vector2(3330,236),Vector2(3330,194),Color("#202a31"),7.0)
     draw_line(Vector2(3313,210),Vector2(3347,210),Color("#202a31"),5.0)
+    draw_circle(Vector2(3330,355),30.0,Color(0.83,0.67,0.41,0.055))
+    draw_arc(Vector2(3330,355),24.0,0.0,TAU,32,Color(0.66,0.54,0.36,0.36),1.5,true)
 
     # Grave Knight's broken gatehouse.
     draw_rect(Rect2(4890,360,80,260),Color("#10161d"))
     draw_rect(Rect2(5200,360,80,260),Color("#10161d"))
     draw_line(Vector2(4930,390),Vector2(5240,390),Color("#151d24"),18.0)
+    draw_line(Vector2(4930,401),Vector2(5240,401),Color(0.40,0.43,0.48,0.21),2.0)
 
     # Black Tower dominates the final approach.
     draw_rect(Rect2(7420,205,170,415),Color("#0b0c14"))
