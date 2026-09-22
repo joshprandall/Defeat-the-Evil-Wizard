@@ -23,7 +23,6 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          from html.parser import HTMLParser
           from pathlib import Path
           import re
           html = Path('web/console.html').read_text(encoding='utf-8')
@@ -103,4 +102,27 @@ jobs:
           name: evil-wizard-handheld-web-${{ github.sha }}
           path: build/web/
           if-no-files-found: error
+          retention-days: 14
+
+      - name: Install Chromium browser test tools
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund --no-package-lock --no-save --prefix "$RUNNER_TEMP/console-browser" playwright@1.55.0
+          "$RUNNER_TEMP/console-browser/node_modules/.bin/playwright" install chromium
+
+      - name: Test real exported browser game and simultaneous touch input
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory build/web > "$RUNNER_TEMP/evil-wizard-http.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          PLAYWRIGHT_MODULE="$RUNNER_TEMP/console-browser/node_modules/playwright" node tests/test_console_browser.mjs
+
+      - name: Upload handheld screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evil-wizard-handheld-screenshot-${{ github.sha }}
+          path: build/handheld-console-preview.png
+          if-no-files-found: ignore
           retention-days: 14
