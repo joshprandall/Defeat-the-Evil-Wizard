@@ -1,11 +1,15 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource path="res://scripts/game.gd" type="Script" id="1_game"]
 [ext_resource path="res://scripts/touch_controls.gd" type="Script" id="2_touch"]
 [ext_resource path="res://scripts/console_bridge.gd" type="Script" id="3_console"]
+[ext_resource path="res://scripts/visual_polish.gd" type="Script" id="4_polish"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_game")
+
+[node name="VisualPolish" type="Node2D" parent="."]
+script = ExtResource("4_polish")
 
 [node name="MobileTouchLayer" type="CanvasLayer" parent="."]
 layer = 30
