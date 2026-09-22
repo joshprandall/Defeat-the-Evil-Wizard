@@ -85,17 +85,48 @@ func _receive_payload(payload: Dictionary) -> void:
         return
     if bool(payload.get("pressed", false)):
         if not _game_is_playing():
+            if action in ["interact", "jump", "attack"]:
+                _advance_modal(action)
             return
         if _held.has(pointer):
             if _held[pointer] == action:
                 return
             _release_pointer(pointer)
+        var first_hold: bool = action not in _held.values()
         _held[pointer] = action
-        Input.action_press(action)
+        if first_hold:
+            _send_action(action, true)
     else:
         # A delayed release from another button must not cancel this action.
         if _held.get(pointer, "") == action:
             _release_pointer(pointer)
+
+func _advance_modal(action: String) -> void:
+    var scene: Node = get_tree().current_scene
+    if scene == null or scene.name != "Game":
+        return
+    var director: CinematicDirector = scene.get("cinema") as CinematicDirector
+    if director != null and director.active:
+        # These sequences listen for unhandled keyboard events. Advance one
+        # beat per touch, instead of waiting for a physical keyboard on mobile.
+        director.call("_advance")
+        return
+    var game_hud: GameHUD = scene.get("hud") as GameHUD
+    if game_hud != null and game_hud.dialogue_panel.visible and action == "interact":
+        _send_action("interact", true)
+        _send_action("interact", false)
+
+func _send_action(action: String, pressed: bool) -> void:
+    if pressed:
+        Input.action_press(action)
+    else:
+        Input.action_release(action)
+    # In addition to polling, deliver an event for dialogue and other UI
+    # handlers that rely on _input/_unhandled_input instead of Input.is_action_pressed.
+    var event: InputEventAction = InputEventAction.new()
+    event.action = action
+    event.pressed = pressed
+    Input.parse_input_event(event)
 
 func _start_champion(champion: String) -> void:
     if champion not in CHAMPIONS:
@@ -127,14 +158,13 @@ func _release_pointer(pointer: String) -> void:
         return
     var action: String = str(_held[pointer])
     _held.erase(pointer)
-    for held_action: Variant in _held.values():
-        if held_action == action:
-            return
-    Input.action_release(action)
+    if action not in _held.values():
+        _send_action(action, false)
 
 func _release_all() -> void:
-    for action: Variant in _held.values():
-        Input.action_release(str(action))
+    for action: Variant in _held.values().duplicate():
+        if InputMap.has_action(str(action)):
+            _send_action(str(action), false)
     _held.clear()
 
 func _toggle_pause() -> void:
@@ -159,7 +189,7 @@ func _disable_legacy_touch_overlay() -> void:
         old_controls.set_process(false)
         old_controls.set_process_input(false)
         old_controls.visible = false
-        # The standalone game can keep its own controls, but the framed game
-        # must restore click/touch emulation for its champion/menu UI.
+        # The standalone game keeps its own controls. In the framed game,
+        # restore click/touch emulation for the built-in menus.
         if OS.has_feature("web"):
             Input.set_emulate_mouse_from_touch(true)
