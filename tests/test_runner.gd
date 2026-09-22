@@ -49,6 +49,8 @@ func _initialize() -> void:
     _assert_true(CombatMath.obsidian_warden_phase(268,960)==3,"Obsidian Warden phase three threshold")
     _assert_close(CombatMath.monk_chi_gain(20),7.0,"Monk Chi from flowing combo")
     _assert_close(CombatMath.ascension_resource_floor(100),35.0,"Ascension starting resource floor")
+    _assert_true(CombatMath.true_wizard_phase(981,1400,0)==1,"Crown Seal remains inactive above threshold")
+    _assert_true(CombatMath.true_wizard_phase(979,1400,0)==2,"Crown Seal activates below threshold")
     _assert_true(CombatMath.true_wizard_phase(980,1400,0)==2,"True Wizard Crown Seal threshold")
     _assert_true(CombatMath.true_wizard_phase(532,1400,0)==3,"True Wizard Roads Return threshold")
     _assert_true(CombatMath.true_wizard_phase(196,1400,0)==4,"True Wizard Mortal Spell threshold")

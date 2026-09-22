@@ -72,7 +72,7 @@ func _build_hud() -> void:
     controls.position = Vector2(470,18)
     controls.size = Vector2(780,102)
     controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-    controls.text = "1–0 FIRST TEN CHAMPIONS   F1 BARD   F2 DRUID   F3 SORCERER   F4 WARLOCK   F5 WIZARD\nA/D MOVE   S CROUCH   SPACE JUMP/WALL KICK   SHIFT/F DASH/SLIDE\nMOUSE / RIGHT STICK AIM   LMB/J ATTACK   RMB/K HEAVY   L/I/Q ABILITIES\nR RESET   ESC RETURN"
+    controls.text = "1–0 FIRST TEN CHAMPIONS   F1 BARD   F2 DRUID   F3 SORCERER   F4 WARLOCK   F5 WIZARD\nA/D MOVE   W/E JUMP   S/Q CROUCH   SHIFT/X DASH\nSPACE/J/LMB ATTACK   K/RMB HEAVY   L/I ABILITIES   U ULTIMATE\nF INTERACT   ` CONSOLE   R RESET   ESC RETURN"
     controls.add_theme_font_size_override("font_size",11)
     controls.add_theme_color_override("font_color",Color(0.78,0.81,0.85,0.82))
     layer.add_child(controls)

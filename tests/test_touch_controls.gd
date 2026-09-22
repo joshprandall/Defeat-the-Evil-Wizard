@@ -45,7 +45,18 @@ func _verify() -> void:
     controls.call("_touch_up", 1)
     _check(not Input.is_action_pressed("attack"), "attack released")
     _check(not Input.is_action_pressed("move_right"), "movement released")
+    controls.call("_touch_down", 4, buttons["crouch"])
+    _check(Input.is_action_pressed("crouch"), "crouch from touch console")
+    controls.call("_touch_up", 4)
+    _check(not Input.is_action_pressed("crouch"), "crouch released")
+    controls.call("_touch_down", 5, buttons["console"])
+    _check(bool(controls.get("console_open")), "control console opens from touch")
+    controls.call("_touch_down", 6, buttons["console"])
+    _check(not bool(controls.get("console_open")), "control console closes from touch")
     controls.call("_release_all")
+    lab.queue_free()
+    await process_frame
+    await process_frame
     if failures > 0:
         printerr("%d mobile touch checks failed" % failures)
         quit(1)

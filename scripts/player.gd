@@ -452,13 +452,13 @@ func _physics_process(delta: float) -> void:
         queue_redraw()
         return
 
-    var wants_crouch: bool = Input.is_action_pressed("move_down") and is_on_floor()
+    var wants_crouch: bool = (Input.is_action_pressed("move_down") or Input.is_action_pressed("crouch")) and is_on_floor()
     if wants_crouch:
         _set_crouching(true)
     elif crouching and _can_stand():
         _set_crouching(false)
 
-    if Input.is_action_just_pressed("jump"):
+    if Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("move_up"):
         if crouching and _can_stand():
             _set_crouching(false)
         jump_buffer = JUMP_BUFFER
@@ -470,7 +470,7 @@ func _physics_process(delta: float) -> void:
     if Input.is_action_just_pressed("attack"):
         attack_buffer = ATTACK_BUFFER
 
-    if dash_time > 0.0 and Input.is_action_just_pressed("jump") and was_on_floor:
+    if dash_time > 0.0 and (Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("move_up")) and was_on_floor:
         dash_time = 0.0
         velocity.y = jump_speed
         velocity.x *= 0.72
@@ -540,7 +540,7 @@ func _physics_process(delta: float) -> void:
             request_flash.emit(global_position + Vector2(0,-20),Color("#c18cff"))
             _spawn_afterimage()
 
-    if Input.is_action_just_released("jump") and velocity.y < -250.0:
+    if (Input.is_action_just_released("jump") or Input.is_action_just_released("move_up")) and velocity.y < -250.0:
         velocity.y *= 0.50
 
     var axis: float = Input.get_axis("move_left", "move_right")

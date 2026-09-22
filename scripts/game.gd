@@ -280,7 +280,7 @@ func _process(delta: float) -> void:
         hud.set_objective("Align the three Storm Vanes")
         if not storm_vane_tutorial_shown:
             storm_vane_tutorial_shown = true
-            hud.announce("STORM VANES ARE INTERACTIVE  //  APPROACH A VANE + PRESS E TO ROTATE",3.2)
+            hud.announce("STORM VANES ARE INTERACTIVE  //  APPROACH A VANE + PRESS F TO ROTATE",3.2)
 
     _update_context_tracker()
 
@@ -1610,7 +1610,7 @@ func _update_context_tracker() -> void:
             "STORM VANES",
             aligned,
             3,
-            "APPROACH A VANE + E TO ROTATE   //   RISING SUN • SETTING SUN • SUMMIT"
+            "APPROACH A VANE + F TO ROTATE   //   RISING SUN • SETTING SUN • SUMMIT"
         )
         return
 
@@ -1623,7 +1623,7 @@ func _update_context_tracker() -> void:
             "ARCANE MIRRORS",
             mirrors_aligned,
             3,
-            "APPROACH A MIRROR + E TO ROTATE"
+            "APPROACH A MIRROR + F TO ROTATE"
         )
         return
 
@@ -1665,13 +1665,13 @@ func _update_interactions() -> void:
 
     for lever: WorldLever in world_levers:
         if is_instance_valid(lever) and not lever.activated and lever.is_player_near():
-            hud.set_interaction_prompt("E  PULL LEVER  //  OPEN SHORTCUT")
+            hud.set_interaction_prompt("F  PULL LEVER  //  OPEN SHORTCUT")
             if Input.is_action_just_pressed("interact"):
                 _activate_world_lever(lever)
             return
 
     if is_instance_valid(bellkeeper) and bellkeeper.is_player_near():
-        hud.set_interaction_prompt("E  SPEAK WITH MARA")
+        hud.set_interaction_prompt("F  SPEAK WITH MARA")
         if Input.is_action_just_pressed("interact"):
             _begin_dialogue()
         return
@@ -1689,7 +1689,7 @@ func _update_interactions() -> void:
                     nearest_distance = distance
 
         if is_instance_valid(nearest):
-            hud.set_interaction_prompt("E  TOUCH %s RUNE" % nearest.display_name)
+            hud.set_interaction_prompt("F  TOUCH %s RUNE" % nearest.display_name)
             if Input.is_action_just_pressed("interact"):
                 _activate_labyrinth_rune(nearest)
             return
@@ -1707,7 +1707,7 @@ func _update_interactions() -> void:
                     vane_distance = distance
 
         if is_instance_valid(nearest_vane):
-            hud.set_interaction_prompt("E  ROTATE STORM VANE   •   CURRENT: %s" % nearest_vane.direction_name())
+            hud.set_interaction_prompt("F  ROTATE STORM VANE   •   CURRENT: %s" % nearest_vane.direction_name())
             if Input.is_action_just_pressed("interact"):
                 _rotate_storm_vane(nearest_vane)
             return
@@ -1725,7 +1725,7 @@ func _update_interactions() -> void:
                     mirror_distance = distance
 
         if is_instance_valid(nearest_mirror):
-            hud.set_interaction_prompt("E  ROTATE %s MIRROR  //  %s" % [nearest_mirror.mirror_id.to_upper(),nearest_mirror.direction_name()])
+            hud.set_interaction_prompt("F  ROTATE %s MIRROR  //  %s" % [nearest_mirror.mirror_id.to_upper(),nearest_mirror.direction_name()])
             if Input.is_action_just_pressed("interact"):
                 _rotate_arcane_mirror(nearest_mirror)
             return

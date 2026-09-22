@@ -96,15 +96,22 @@ Movement and animation are still scheduled for deeper refinement after the campa
 Open `project.godot` with Godot 4.7.2 and press Play Project.
 
 ## Controls
-- A / D: Move
-- Space: Jump / wall jump
-- Shift or F: Dash / Blink
-- J: Basic attack
-- K: Heavy attack
-- L: Ability 1
-- I: Ability 2
-- Q: Ultimate when the class resource is full
-- Esc: Pause
+
+The default keyboard layout follows the familiar action-game pattern while keeping actions readable on a small screen:
+
+- W / A / S / D: directional movement
+- E (or W): jump / wall jump
+- Q: crouch; hold while grounded
+- Space or left mouse: light attack / fire
+- K or right mouse: heavy attack
+- Shift or X: dash / slide
+- L / I: class abilities
+- U: ultimate when the class resource is full
+- F: interact with characters, levers, runes, mirrors, and travel nodes
+- ` (backquote): open the control console
+- Esc: pause
+
+On phones and tablets, rotate to landscape. The game shows a left virtual stick, large square action buttons, independent multi-touch holds, and a console button that opens the complete control legend. The touch layer maps to the same input actions as the keyboard and gamepad, so a player can change input method without changing gameplay rules.
 
 ## Development status
 0.4 is the first authored-region milestone. Visuals are still largely procedural by design while the game structure, combat, traversal, progression, encounter flow, and class architecture are being established. Final character art, animation, environment art, effects, and audio production come after these systems stabilize.
