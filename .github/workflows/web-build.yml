@@ -48,6 +48,12 @@ jobs:
           set -euo pipefail
           "$GODOT_BIN" --headless --path . --editor --import --quit
 
+      - name: Run combat and multi-finger controls tests
+        run: |
+          set -euo pipefail
+          "$GODOT_BIN" --headless --path . --script res://tests/test_runner.gd
+          "$GODOT_BIN" --headless --path . --script res://tests/test_touch_controls.gd
+
       - name: Export browser game
         run: |
           set -euo pipefail
