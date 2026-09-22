@@ -37,6 +37,7 @@ jobs:
           print('Handheld shell content verified.')
           PY
           node --check /tmp/evil-wizard-console.js
+          node --check web/console-champions.js
 
       - name: Install Godot 4.7.2 and single-threaded Web templates
         shell: bash
@@ -92,7 +93,16 @@ jobs:
           mkdir -p build/web
           "$GODOT_BIN" --headless --path . --export-release Web build/web/index.html
           cp web/console.html build/web/console.html
-          for file in index.html index.js index.wasm index.pck console.html; do
+          cp web/console-champions.js build/web/console-champions.js
+          python3 - <<'PY'
+          from pathlib import Path
+          file = Path('build/web/console.html')
+          html = file.read_text(encoding='utf-8')
+          assert html.count('</body>') == 1
+          html = html.replace('</body>', '<script src="./console-champions.js"></script>\n</body>')
+          file.write_text(html, encoding='utf-8')
+          PY
+          for file in index.html index.js index.wasm index.pck console.html console-champions.js; do
             test -s "build/web/$file" || { echo "Missing or empty: build/web/$file"; exit 1; }
           done
 
