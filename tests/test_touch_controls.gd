@@ -6,6 +6,16 @@ func _initialize() -> void:
     call_deferred("_verify")
 
 func _verify() -> void:
+    # These mappings must be the same in the desktop and handheld exports.
+    _check(_has_key(&"jump", KEY_W) and _has_key(&"jump", KEY_E), "W/E jump")
+    _check(not _has_key(&"jump", KEY_SPACE), "Space no longer conflicts with jump")
+    _check(_has_key(&"move_down", KEY_S) and _has_key(&"move_down", KEY_Q), "S/Q crouch")
+    _check(_has_key(&"attack", KEY_SPACE) and _has_key(&"attack", KEY_J), "Space/J light attack")
+    _check(_has_mouse_attack(), "Left mouse light attack")
+    _check(_has_key(&"interact", KEY_F) and not _has_key(&"interact", KEY_E), "F interact; E reserved for jump")
+    _check(_has_key(&"ultimate", KEY_U) and not _has_key(&"ultimate", KEY_Q), "U ultimate; Q reserved for crouch")
+    _check(not _has_key(&"dash", KEY_F), "F does not trigger dash and interact together")
+
     if change_scene_to_file("res://scenes/MovementLab.tscn") != OK:
         printerr("FAIL: cannot load Movement Lab")
         quit(1)
@@ -47,11 +57,23 @@ func _verify() -> void:
     _check(not Input.is_action_pressed("move_right"), "movement released")
     controls.call("_release_all")
     if failures > 0:
-        printerr("%d mobile touch checks failed" % failures)
+        printerr("%d input checks failed" % failures)
         quit(1)
     else:
-        print("Mobile touch input smoke test passed.")
+        print("Desktop input map and independent mobile touch smoke test passed.")
         quit(0)
+
+func _has_key(action: StringName, key_code: int) -> bool:
+    for event: InputEvent in InputMap.action_get_events(action):
+        if event is InputEventKey and (event as InputEventKey).physical_keycode == key_code:
+            return true
+    return false
+
+func _has_mouse_attack() -> bool:
+    for event: InputEvent in InputMap.action_get_events(&"attack"):
+        if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+            return true
+    return false
 
 func _check(condition: bool, label: String) -> void:
     if not condition:
