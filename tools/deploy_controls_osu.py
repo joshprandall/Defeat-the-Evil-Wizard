@@ -17,25 +17,25 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 from zipfile import ZipFile
 
-BUILD_COMMIT = "30f1758b994ae4aedff7a611f642b1a3c81388ac"
-ARTIFACT_ID = 10779285034
+BUILD_COMMIT = "9ac3f2e5564464ea0401f1fa5b957b799ee041c6"
+ARTIFACT_ID = 10779396978
 ARCHIVE_URL = (
     "https://nightly.link/joshprandall/Defeat-the-Evil-Wizard/"
     f"actions/artifacts/{ARTIFACT_ID}.zip"
 )
 EXPECTED_SHA256 = {
-    "console-champions.js": "d2d0c7aa59e6ba9d120b3bd76fe2f4bb32955a070a476c59b7d90c3051946092",
-    "console.html": "6c1747187b1aba310e4c08614913a05c75e1e1174a4c74665eec2375ed8af920",
+    "console-champions.js": "9b52e99713dddee0339f215059e53cc244769c05a636a752d3fc932890d26ef0",
+    "console.html": "fe0d12ac7fa0ba2e72f4bdca91a8876cb189fc364163c6c8ccc471b98ecd3d9e",
     "index.apple-touch-icon.png": "01d4f63e525941e06ce74f5187dad030d20a8d52a07ce365ae4e94af97a3b1f5",
     "index.audio.position.worklet.js": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
     "index.audio.worklet.js": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
-    "index.html": "8ad4f88a7fad67e6e75728e2f27aea20fa96012f30ebdf170b7d486be73b9330",
+    "index.html": "d7cd90a0d6c35cc72bb1a37961e76807e630ed1b9f189a0b8d0ddb5c2f4e19ee",
     "index.icon.png": "ad3c35ad0facf487c618204bd98db543034fc95224eadc7f08c7a9ff38d5b3b5",
     "index.js": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba",
-    "index.pck": "acadcce952e0b17362c2c0e1672ac69bca1f55a7e4fe14321d733ce9a27932e8",
+    "index.pck": "d1049b2bd8fa242c66d6162efaad4bfdf239440b9eb27358d57e458a5a731fd9",
     "index.png": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
     "index.wasm": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0",
-    "play.html": "f01d33018a6aa213f4bc5b529c03ed33025b444e7c624ce36c386802e67294b9",
+    "play.html": "f21764000663073692ffaeefef273c6ce9e809c8da3686e9d58b55ff866a4af5",
 }
 REQUIRED = {
     "play.html", "console-champions.js", "console.html", "index.apple-touch-icon.png",
@@ -51,35 +51,52 @@ def fail(message: str) -> None:
 def verify_text(files: dict[str, bytes]) -> None:
     play = files["play.html"].decode("utf-8")
     touch = files["console.html"].decode("utf-8")
-    guides = files["console-champions.js"].decode("utf-8")
+    model = files["console-champions.js"].decode("utf-8")
 
     for marker in (
-        'id="setup"',
-        "How the game works",
-        'id="input-mode"',
-        "Phone / tablet touch controls",
-        "Gaming handheld physical controls",
-        "Xbox / PlayStation",
+        'data-screen="play"',
+        'data-screen="controls"',
+        'data-screen="settings"',
+        'data-screen="how"',
+        'id="touch-map"',
+        'id="keyboard-map"',
+        'id="gamepad-map"',
+        'id="difficulty"',
+        'id="master-volume"',
+        'id="brightness"',
+        "Reset controls to defaults",
         "console.html?",
-        "gamepadconnected",
     ):
         if marker not in play:
-            fail(f"Launcher verification failed: missing {marker}")
+            fail(f"Game menu verification failed: missing {marker}")
 
     for marker in (
         "data-evil-wizard-console",
         "orientation-gate",
         "Turn your screen sideways",
-        "move-cluster",
-        "action-cluster",
+        "left-zone",
+        "right-zone",
+        "top-left",
+        "top-right",
+        'data-position="south"',
+        "xbox-label",
+        "ps-label",
         'src="./index.html"',
     ):
         if marker not in touch:
-            fail(f"Touch shell verification failed: missing {marker}")
+            fail(f"Floating controller verification failed: missing {marker}")
 
-    for marker in ("Phone / Tablet", "Keyboard / mouse", "Xbox / standard gamepad", "PlayStation controller"):
-        if marker not in guides:
-            fail(f"Control-guide verification failed: missing {marker}")
+    for marker in (
+        "keyOptions",
+        "gamepadOptions",
+        "PlayStation controller",
+        "Xbox / standard gamepad",
+        "masterVolume",
+        "cameraShake",
+    ):
+        if marker not in model:
+            fail(f"Control/settings model verification failed: missing {marker}")
+
 
 
 def main() -> None:
