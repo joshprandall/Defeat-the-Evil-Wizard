@@ -5,6 +5,10 @@ extends Node
 # Only explicit messages from our own parent frame are forwarded as Input Map actions.
 const CHANNEL := "evil-wizard-console/v1"
 const ALLOWED := ["move_left", "move_right", "move_down", "jump", "attack", "heavy_attack", "dash", "interact", "ability_one", "ability_two", "ultimate"]
+const REMAPPABLE := ["jump", "dash", "attack", "heavy_attack", "interact", "ability_one", "ability_two", "ultimate", "pause"]
+const ALLOWED_KEYS := [32,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,4194305,4194311,4194312,4194313,4194314,4194325]
+const ALLOWED_BUTTONS := [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+const ALLOWED_AXES := [4,5]
 const CHAMPIONS := ["warrior", "mage", "rogue", "paladin", "archer", "barbarian", "fighter", "monk", "ranger", "cleric", "bard", "druid", "sorcerer", "warlock", "wizard"]
 
 var _js_callback: JavaScriptObject
@@ -82,6 +86,12 @@ func _receive_payload(payload: Dictionary) -> void:
     if str(payload.get("kind", "")) == "reset":
         _release_all()
         return
+    if str(payload.get("kind", "")) == "settings":
+        _apply_settings(payload)
+        return
+    if str(payload.get("kind", "")) == "controls":
+        _apply_controls(payload)
+        return
     if str(payload.get("kind", "")) == "start":
         _start_champion(str(payload.get("hero_class", "")))
         return
@@ -114,6 +124,84 @@ func _receive_payload(payload: Dictionary) -> void:
         # A delayed release from another button must not cancel this action.
         if _held.get(pointer, "") == action:
             _release_pointer(pointer)
+
+func _apply_settings(payload: Dictionary) -> void:
+    var scene: Node = get_tree().current_scene
+    if scene != null and scene.name == "Game":
+        var difficulty: String = str(payload.get("difficulty", "adventurer"))
+        if difficulty not in ["story","adventurer","legend"]:
+            difficulty = "adventurer"
+        scene.call("_on_difficulty_changed", difficulty)
+        scene.set("camera_shake_enabled", bool(payload.get("camera_shake", true)))
+
+    var volume_percent: float = clampf(float(payload.get("master_volume", 100.0)), 0.0, 100.0)
+    var master_bus: int = AudioServer.get_bus_index("Master")
+    if master_bus >= 0:
+        AudioServer.set_bus_mute(master_bus, volume_percent <= 0.0)
+        if volume_percent > 0.0:
+            AudioServer.set_bus_volume_db(master_bus, linear_to_db(volume_percent / 100.0))
+
+
+func _apply_controls(payload: Dictionary) -> void:
+    var keyboard: Variant = payload.get("keyboard", {})
+    if typeof(keyboard) == TYPE_DICTIONARY:
+        for action: String in REMAPPABLE:
+            if not keyboard.has(action):
+                continue
+            var key_code: int = int(keyboard[action])
+            if key_code not in ALLOWED_KEYS:
+                continue
+            _replace_keyboard_event(action, key_code)
+
+    var gamepad: Variant = payload.get("gamepad", {})
+    if typeof(gamepad) == TYPE_DICTIONARY:
+        for action: String in REMAPPABLE:
+            if not gamepad.has(action):
+                continue
+            var binding: String = str(gamepad[action])
+            _replace_gamepad_event(action, binding)
+
+
+func _replace_keyboard_event(action: String, key_code: int) -> void:
+    if not InputMap.has_action(action):
+        return
+    for event: InputEvent in InputMap.action_get_events(action).duplicate():
+        if event is InputEventKey:
+            InputMap.action_erase_event(action, event)
+    var key_event: InputEventKey = InputEventKey.new()
+    key_event.physical_keycode = key_code
+    InputMap.action_add_event(action, key_event)
+
+
+func _replace_gamepad_event(action: String, binding: String) -> void:
+    if not InputMap.has_action(action):
+        return
+    for event: InputEvent in InputMap.action_get_events(action).duplicate():
+        if event is InputEventJoypadButton or event is InputEventJoypadMotion:
+            InputMap.action_erase_event(action, event)
+
+    if binding.begins_with("button:"):
+        var button_index: int = int(binding.trim_prefix("button:"))
+        if button_index not in ALLOWED_BUTTONS:
+            return
+        var button_event: InputEventJoypadButton = InputEventJoypadButton.new()
+        button_event.button_index = button_index
+        InputMap.action_add_event(action, button_event)
+        return
+
+    if binding.begins_with("axis:"):
+        var parts: PackedStringArray = binding.split(":")
+        if parts.size() != 3:
+            return
+        var axis_index: int = int(parts[1])
+        var direction: float = float(parts[2])
+        if axis_index not in ALLOWED_AXES or absf(direction) != 1.0:
+            return
+        var axis_event: InputEventJoypadMotion = InputEventJoypadMotion.new()
+        axis_event.axis = axis_index
+        axis_event.axis_value = direction
+        InputMap.action_add_event(action, axis_event)
+
 
 func _advance_modal(action: String) -> void:
     var scene: Node = get_tree().current_scene
