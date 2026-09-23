@@ -102,7 +102,8 @@ func _physics_process(delta: float) -> void:
         else:
             velocity.x = move_toward(velocity.x, 0.0, 1600.0 * delta)
             if attack_cooldown <= 0.0:
-                _begin_attack()
+                if enemy_type == "wisp" or _can_melee_target():
+                    _begin_attack()
     else:
         velocity.x = move_toward(velocity.x, 0.0, 700.0 * delta)
 
@@ -142,12 +143,30 @@ func _execute_attack() -> void:
         velocity.x = facing * 270.0
 
     var reach_bonus: float = 20.0 if enemy_type == "sentinel" else 16.0
-    if absf(dx) <= attack_range + reach_bonus and absf(dy) < 105.0:
+    if _can_melee_target(reach_bonus):
         var knockback: float = 440.0 if enemy_type == "sentinel" else 350.0
         target.take_damage(attack_damage,signf(dx)*knockback,global_position)
         request_flash.emit(target.global_position + Vector2(0,-28),Color("#ff7d74"))
     sfx_requested.emit("enemy_attack",-9.0,0.90 if enemy_type == "sentinel" else 1.08)
     queue_redraw()
+
+func _can_melee_target(reach_bonus: float = 0.0) -> bool:
+    if not is_instance_valid(target):
+        return false
+    var dx: float = target.global_position.x - global_position.x
+    var dy: float = target.global_position.y - global_position.y
+    var max_vertical: float = 72.0 if enemy_type == "sentinel" else 58.0
+    if absf(dx) > attack_range + reach_bonus or absf(dy) > max_vertical:
+        return false
+
+    # Melee attacks must have an unobstructed path through the World layer.
+    # This prevents enemies on the floor from damaging a player through a
+    # platform or wall above them.
+    var from: Vector2 = global_position + Vector2(0,-28)
+    var to: Vector2 = target.global_position + Vector2(0,-29)
+    var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(from,to,4,[get_rid()])
+    var obstruction: Dictionary = get_world_2d().direct_space_state.intersect_ray(query)
+    return obstruction.is_empty()
 
 func take_damage(amount: float, knockback: float = 0.0, _source: Vector2 = Vector2.ZERO, stun: float = 0.0) -> void:
     if health <= 0.0:
