@@ -21,9 +21,9 @@ from zipfile import ZipFile
 
 ARCHIVE_URL = (
     "https://nightly.link/joshprandall/Defeat-the-Evil-Wizard/"
-    "actions/artifacts/10746128550.zip"
+    "actions/artifacts/10769224129.zip"
 )
-ARCHIVE_SHA256 = "b64441ce3455ec0e571c7e8a0a83a8b076350df4c3b19afddfbee3dfe720365c"
+ARCHIVE_SHA256 = "a73a57de7c2cb5cccede9b885976ba9cf52a2f8e79df84956019899500de3246"
 REQUIRED = {
     "play.html", "console-champions.js", "console.html", "index.apple-touch-icon.png",
     "index.audio.position.worklet.js", "index.audio.worklet.js", "index.html",
@@ -117,7 +117,7 @@ def main() -> None:
     if not (live / "index.html").is_file():
         raise ValueError("Existing Evil Wizard game is not intact; nothing changed.")
 
-    print("Downloading verified Evil Wizard main build...", flush=True)
+    print("Downloading verified Evil Wizard iPhone/WebView main build...", flush=True)
     request = Request(ARCHIVE_URL, headers={"User-Agent": "Mozilla/5.0"})
     with urlopen(request, timeout=120) as response:
         archive_bytes = response.read(MAX_ARCHIVE_BYTES + 1)
