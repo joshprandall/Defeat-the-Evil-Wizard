@@ -55,7 +55,8 @@ try {
 
   assert.equal(await phone.locator('.orientation-gate').isVisible(),false,'Landscape phone must immediately show gameplay');
   assert.equal(await phone.locator('.screen-bezel').count(),0,'No virtual console frame may surround the game');
-  assert.equal(await phone.locator('.left-zone').isVisible(),true,'Controller-style left zone must float over the game');
+  assert.equal(await phone.locator('.dpad').count(),0,'Phone/tablet overlay must not contain a virtual D-pad');
+  assert.equal(await phone.locator('.left-zone').isVisible(),true,'Joystick-only left zone must float over the game');
   assert.equal(await phone.locator('.right-zone').isVisible(),true,'Controller-style face buttons must float over the game');
   assert.equal(await phone.locator('.top-left').isVisible(),true,'Left shoulder/trigger controls must float over the game');
   assert.equal(await phone.locator('.top-right').isVisible(),true,'Right shoulder/trigger controls must float over the game');
@@ -71,13 +72,18 @@ try {
     const game=document.getElementById('game').getBoundingClientRect();
     const joy=document.getElementById('joystick').getBoundingClientRect();
     const face=document.querySelector('.right-zone').getBoundingClientRect();
+    const south=document.querySelector('[data-position="south"]').getBoundingClientRect();
+    const shoulder=document.querySelector('[data-position="l1"]').getBoundingClientRect();
     const center=document.elementFromPoint(innerWidth/2,innerHeight/2);
-    return {game:{w:game.width,h:game.height},joy:{x:joy.x,right:joy.right,w:joy.width},face:{x:face.x,right:face.right},vw:innerWidth,vh:innerHeight,centerId:center?.id||'',filter:getComputedStyle(document.getElementById('game')).filter,alpha:getComputedStyle(document.documentElement).getPropertyValue('--alpha')};
+    return {game:{w:game.width,h:game.height},joy:{x:joy.x,right:joy.right,w:joy.width},face:{x:face.x,right:face.right},south:{w:south.width,h:south.height},shoulder:{w:shoulder.width,h:shoulder.height},vw:innerWidth,vh:innerHeight,centerId:center?.id||'',filter:getComputedStyle(document.getElementById('game')).filter,alpha:getComputedStyle(document.documentElement).getPropertyValue('--alpha')};
   });
   assert.equal(Math.round(layout.game.w),layout.vw,'Game must remain full viewport behind controls');
   assert.equal(Math.round(layout.game.h),layout.vh,'Game must remain full viewport behind controls');
-  assert(layout.joy.right<layout.vw*.31,'Left controls must stay near the left edge');
+  assert(layout.joy.right<layout.vw*.31,'Left joystick must stay near the left edge');
   assert(layout.face.x>layout.vw*.66,'Face controls must stay near the right edge');
+  assert(layout.joy.w>=96,'Phone joystick must be substantially larger than the previous overlay');
+  assert(layout.south.w>=46&&layout.south.h>=46,'Phone face buttons must be substantially larger and touch-friendly');
+  assert(layout.shoulder.h>=30,'Phone shoulder controls must be easier to hit');
   assert.equal(layout.centerId,'game','Center of gameplay must remain unobstructed');
   assert.match(layout.filter,/brightness\(1\.15\)/,'Brightness setting must apply to touch game');
 
