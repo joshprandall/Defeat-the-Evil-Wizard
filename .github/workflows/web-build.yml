@@ -26,11 +26,14 @@ jobs:
           from pathlib import Path
           import re
           html = Path('web/console.html').read_text(encoding='utf-8')
+          launcher = Path('web/play.html').read_text(encoding='utf-8')
           required = ('data-evil-wizard-console', 'id="joystick"', 'id="game"', 'src="./index.html"',
                       'move_left', 'move_right', 'move_down', 'jump', 'attack', 'heavy_attack',
                       'dash', 'interact', 'ability_one', 'ability_two', 'ultimate', 'pause')
           for item in required:
               assert item in html, f'Missing console feature: {item}'
+          for item in ('console.html', 'index.html', 'requestFullscreen', "event.key === 'Escape'", 'navigator.maxTouchPoints'):
+              assert item in launcher, f'Missing adaptive launcher feature: {item}'
           scripts = re.findall(r'<script>(.*?)</script>', html, re.DOTALL)
           assert len(scripts) == 1, 'Expected exactly one inline console controller'
           Path('/tmp/evil-wizard-console.js').write_text(scripts[0], encoding='utf-8')
@@ -98,6 +101,7 @@ jobs:
           mkdir -p build/web
           "$GODOT_BIN" --headless --path . --export-release Web build/web/index.html
           cp web/console.html build/web/console.html
+          cp web/play.html build/web/play.html
           cp web/console-champions.js build/web/console-champions.js
           python3 - <<'PY'
           from pathlib import Path
@@ -107,7 +111,7 @@ jobs:
           html = html.replace('</body>', '<script src="./console-champions.js"></script>\n</body>')
           file.write_text(html, encoding='utf-8')
           PY
-          for file in index.html index.js index.wasm index.pck console.html console-champions.js; do
+          for file in index.html index.js index.wasm index.pck play.html console.html console-champions.js; do
             test -s "build/web/$file" || { echo "Missing or empty: build/web/$file"; exit 1; }
           done
 
