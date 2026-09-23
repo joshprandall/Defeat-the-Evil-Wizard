@@ -61,6 +61,15 @@ func _run() -> void:
     hero.call("_strike",20.0,62.0,44.0,0.0,0.0)
     _assert_true(enemy.health < enemy_before,"melee follows facing when mouse aim is stale")
 
+    enemy.health = enemy.max_health
+    hero.global_position = Vector2(0,0)
+    enemy.global_position = Vector2(-12,0)
+    hero.facing = 1.0
+    enemy_before = enemy.health
+    hero.call("_strike",20.0,62.0,44.0,0.0,0.0)
+    _assert_true(enemy.health < enemy_before,"point-blank enemy behind hero is acquired by melee assist")
+    _assert_close(hero.facing,-1.0,"melee assist turns hero toward close enemy")
+
     world.queue_free()
     if failures == 0:
         print("Mobile gameplay regression tests passed.")
