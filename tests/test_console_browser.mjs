@@ -19,6 +19,7 @@ try {
   assert.equal(await page.locator('#joystick').isVisible(),true,'Joystick must be visible');
   assert.equal(await page.locator('#champion-choice option').count(),15,'All champions selectable without tiny game menu');
   assert.equal(await page.locator('#start-champion').isVisible(),true,'Mobile start button must be visible');
+  assert.match(await page.locator('meta[name="viewport"]').getAttribute('content'),/maximum-scale=1/,'Mobile shell must lock browser page scale');
 
   const rails=await page.evaluate(()=>{
     const g=document.getElementById('game').getBoundingClientRect(),l=document.querySelector('.rail.left').getBoundingClientRect(),r=document.querySelector('.rail.right').getBoundingClientRect();
@@ -43,15 +44,17 @@ try {
   const titleImage=await page.locator('#game').screenshot();
   await page.locator('#start-champion').click();
   await page.waitForFunction(()=>window.__consoleAudit.some(m=>m.kind==='start'&&m.hero_class==='warrior'));
+  assert.match(await page.locator('#status').textContent(),/INTERACT/,'Start must tell the player how to advance the opening');
+  assert.equal(await page.locator('button[data-action="interact"]').evaluate(el=>el.classList.contains('tutorial-pulse')),true,'Interact must be visibly highlighted during opening');
   await page.waitForTimeout(450);
   const prologueImage=await page.locator('#game').screenshot();
   assert(!titleImage.equals(prologueImage),'Starting champion must show opening prologue');
   for(let beat=0;beat<3;beat++){
-    await page.locator('button[data-action="jump"]').click();
-    await page.waitForTimeout(200);
+    await page.locator('button[data-action="interact"]').click();
+    await page.waitForTimeout(220);
   }
   const gameImage=await page.locator('#game').screenshot();
-  assert(!prologueImage.equals(gameImage),'Mobile Jump must advance prologue to game screen');
+  assert(!prologueImage.equals(gameImage),'Mobile Interact must advance prologue to game screen');
 
   await page.locator('button[data-action="attack"]').click();
   await page.waitForFunction(()=>window.__consoleAudit.some(m=>m.action==='attack'&&m.pressed===true));
@@ -67,9 +70,44 @@ try {
   await cdps.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[first]});
   await cdps.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   await page.waitForFunction(()=>window.__consoleAudit.some(m=>m.action==='move_right'&&m.pressed===false));
+  const scale=await page.evaluate(()=>window.visualViewport?.scale ?? 1);
+  assert.equal(scale,1,'Multi-touch gameplay must not zoom the browser page');
   await page.screenshot({path:'build/handheld-console-preview.png'});
   assert.equal(errors.length,0,`Mobile browser JS errors: ${errors.join('; ')}`);
   await mobileContext.close();
+
+  // Facebook's iOS in-app browser can remain portrait even when the phone is
+  // physically rotated. The game must remain usable instead of covering itself
+  // with a mandatory rotate screen.
+  const facebookContext = await browser.newContext({
+    viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:1,
+    userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 [FBAN/FBIOS;FBAV/500.0.0.0]'
+  });
+  const facebook = await facebookContext.newPage();
+  const fbErrors=[];
+  facebook.on('pageerror',error=>fbErrors.push(String(error)));
+  await facebook.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
+  await facebook.waitForURL(/\/console\.html$/);
+  assert.equal(await facebook.locator('#game').isVisible(),true,'Portrait in-app browser must still show the game');
+  assert.equal(await facebook.locator('#joystick').isVisible(),true,'Portrait in-app browser must keep movement controls visible');
+  assert.equal(await facebook.locator('button[data-action="attack"]').isVisible(),true,'Portrait in-app browser must keep attack visible');
+  const portrait=await facebook.evaluate(()=>{
+    const attack=document.querySelector('button[data-action="attack"]').getBoundingClientRect();
+    const center=document.elementFromPoint(attack.left+attack.width/2,attack.top+attack.height/2);
+    return {
+      width:document.documentElement.scrollWidth,
+      height:document.documentElement.scrollHeight,
+      iw:innerWidth,ih:innerHeight,
+      attackReachable:Boolean(center&&center.closest('button[data-action="attack"]')),
+      rotatePointer:getComputedStyle(document.querySelector('.rotate')).pointerEvents
+    };
+  });
+  assert.equal(portrait.width,portrait.iw,'Portrait console must not overflow horizontally');
+  assert.equal(portrait.height,portrait.ih,'Portrait console must fit the in-app browser viewport');
+  assert.equal(portrait.attackReachable,true,'Portrait attack control must not be covered by rotate messaging');
+  assert.equal(portrait.rotatePointer,'none','Landscape recommendation must never block controls');
+  assert.equal(fbErrors.length,0,`Facebook-style browser JS errors: ${fbErrors.join('; ')}`);
+  await facebookContext.close();
 
   const desktopContext = await browser.newContext({viewport:{width:1365,height:768},hasTouch:false,deviceScaleFactor:1});
   const desktop = await desktopContext.newPage();
@@ -94,7 +132,7 @@ try {
   assert.equal(desktopErrors.length,0,`Desktop browser JS errors: ${desktopErrors.join('; ')}`);
   await desktopContext.close();
 
-  console.log('Browser passed: adaptive mobile console, simultaneous touch, desktop keyboard launch, and borderless dynamic viewport.');
+  console.log('Browser passed: landscape mobile, portrait Facebook-style webview, no gameplay zoom, guided opening, desktop keyboard launch, and borderless viewport.');
 } finally {
   await browser.close();
 }
