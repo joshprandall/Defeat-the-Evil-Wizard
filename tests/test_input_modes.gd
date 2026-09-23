@@ -43,6 +43,7 @@ func _run() -> void:
     if failures == 0:
         print("Desktop keyboard/mouse and Xbox-style gamepad input checks passed.")
         quit(0)
+        return
     printerr("%d input-mode checks failed." % failures)
     quit(1)
 
