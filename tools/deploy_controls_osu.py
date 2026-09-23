@@ -23,7 +23,20 @@ ARCHIVE_URL = (
     "https://nightly.link/joshprandall/Defeat-the-Evil-Wizard/"
     f"actions/artifacts/{ARTIFACT_ID}.zip"
 )
-ARCHIVE_SHA256 = "8d1cef6a647154b7e1f5b731fcb621fa3c426f952ecbc36e898435c31d9af144"
+EXPECTED_SHA256 = {
+    "console-champions.js": "700a7c08a9153237068b22749610fb508245102149f50896a1e1b3ae6c167c6f",
+    "console.html": "e6ec05be7caa598f6a82beee9e694f9e6afe422075f6204e58d74ffaa4276253",
+    "index.apple-touch-icon.png": "01d4f63e525941e06ce74f5187dad030d20a8d52a07ce365ae4e94af97a3b1f5",
+    "index.audio.position.worklet.js": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+    "index.audio.worklet.js": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+    "index.html": "8ad4f88a7fad67e6e75728e2f27aea20fa96012f30ebdf170b7d486be73b9330",
+    "index.icon.png": "ad3c35ad0facf487c618204bd98db543034fc95224eadc7f08c7a9ff38d5b3b5",
+    "index.js": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba",
+    "index.pck": "c65e86780e02f949f22c444112984d90bd3968615445458940e8119d75b74a4f",
+    "index.png": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+    "index.wasm": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0",
+    "play.html": "e689b582ed30ab572ef9e92ff7df750a586d96f94bff96bf428d7e1f46dc616b",
+}
 REQUIRED = {
     "play.html", "console-champions.js", "console.html", "index.apple-touch-icon.png",
     "index.audio.position.worklet.js", "index.audio.worklet.js", "index.html",
@@ -84,10 +97,6 @@ def main() -> None:
 
     if len(archive_bytes) > MAX_ARCHIVE_BYTES:
         fail("Build archive is unexpectedly large.")
-    digest = hashlib.sha256(archive_bytes).hexdigest()
-    if digest != ARCHIVE_SHA256:
-        fail(f"Build checksum mismatch: {digest}")
-
     with ZipFile(BytesIO(archive_bytes)) as bundle:
         entries = bundle.infolist()
         names = {entry.filename for entry in entries}
@@ -101,6 +110,10 @@ def main() -> None:
             fail("Build ZIP integrity test failed.")
 
         files = {entry.filename: bundle.read(entry) for entry in entries}
+        for name, data in files.items():
+            digest = hashlib.sha256(data).hexdigest()
+            if digest != EXPECTED_SHA256.get(name):
+                fail(f"File checksum mismatch for {name}: {digest}")
         verify_text(files)
 
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
