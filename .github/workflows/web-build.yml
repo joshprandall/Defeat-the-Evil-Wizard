@@ -21,34 +21,38 @@ jobs:
       - name: Validate OSU deployment tool
         run: python3 -m py_compile tools/deploy_controls_osu.py
 
-      - name: Verify handheld console markup and JavaScript
+      - name: Verify adaptive launcher and floating touch shell
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           import re
-          html = Path('web/console.html').read_text(encoding='utf-8')
+          touch = Path('web/console.html').read_text(encoding='utf-8')
           launcher = Path('web/play.html').read_text(encoding='utf-8')
-          required = ('data-evil-wizard-console', 'id="joystick"', 'id="game"', 'src="./index.html"',
-                      'move_left', 'move_right', 'move_down', 'jump', 'attack', 'heavy_attack',
-                      'dash', 'interact', 'ability_one', 'ability_two', 'ultimate', 'pause',
-                      'orientation-gate', 'Turn your device sideways', 'console-champions.js')
-          for item in required:
-              assert item in html, f'Missing console feature: {item}'
-          for item in ('console.html', 'index.html', 'requestFullscreen', "event.key === 'Escape'",
-                       'navigator.maxTouchPoints', 'compactTouchDevice', 'knownHandheldPC',
-                       'navigator.getGamepads', 'Controller detected'):
-              assert item in launcher, f'Missing adaptive launcher feature: {item}'
-          scripts = re.findall(r'<script>(.*?)</script>', html, re.DOTALL)
-          assert len(scripts) == 1, 'Expected exactly one inline console controller'
-          Path('/tmp/evil-wizard-console.js').write_text(scripts[0], encoding='utf-8')
-          print('Handheld shell content verified.')
+          shared = Path('web/console-champions.js').read_text(encoding='utf-8')
+          for item in ('id="setup"', 'How the game works', 'id="champion"', 'id="input-mode"',
+                       'Phone / tablet touch controls', 'Keyboard + mouse', 'Xbox / PlayStation',
+                       'Gaming handheld physical controls', 'console.html?', 'gamepadconnected'):
+              assert item in launcher, f'Missing launcher feature: {item}'
+          for item in ('data-evil-wizard-console', 'id="joystick"', 'id="game"', 'src="./index.html"',
+                       'orientation-gate', 'Turn your screen sideways', 'move_left', 'move_right',
+                       'move_down', 'jump', 'attack', 'heavy_attack', 'dash', 'interact',
+                       'ability_one', 'ability_two', 'ultimate', 'pause', 'action-cluster'):
+              assert item in touch, f'Missing floating touch feature: {item}'
+          for item in ('PlayStation', 'Xbox', 'Phone / Tablet', 'Keyboard'):
+              assert item in shared, f'Missing shared control guide: {item}'
+          launcher_scripts = re.findall(r'<script>(.*?)</script>', launcher, re.DOTALL)
+          touch_scripts = re.findall(r'<script>(.*?)</script>', touch, re.DOTALL)
+          assert len(launcher_scripts) == 1, 'Expected one inline launcher controller'
+          assert len(touch_scripts) == 1, 'Expected one inline touch controller'
+          Path('/tmp/evil-wizard-launcher.js').write_text(launcher_scripts[0], encoding='utf-8')
+          Path('/tmp/evil-wizard-touch.js').write_text(touch_scripts[0], encoding='utf-8')
+          print('Adaptive launcher and floating touch shell verified.')
           PY
-          node --check /tmp/evil-wizard-console.js
+          node --check /tmp/evil-wizard-launcher.js
+          node --check /tmp/evil-wizard-touch.js
           node --check web/console-champions.js
-          grep -q 'HOW TO PLAY / CONTROLS' web/console-champions.js
-          grep -q 'Xbox-compatible controller' web/console-champions.js
 
       - name: Install Godot 4.7.2 and single-threaded Web templates
         shell: bash
@@ -100,7 +104,7 @@ jobs:
           set -euo pipefail
           "$GODOT_BIN" --headless --path . --script res://tests/test_mobile_gameplay_regressions.gd
 
-      - name: Test desktop keyboard mouse and Xbox controller mappings
+      - name: Test desktop keyboard mouse and standard gamepad mappings
         run: |
           set -euo pipefail
           "$GODOT_BIN" --headless --path . --script res://tests/test_input_modes.gd
