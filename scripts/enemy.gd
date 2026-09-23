@@ -258,11 +258,12 @@ func _draw() -> void:
         draw_arc(Vector2(0,-28),radius + 5.0,0.0,TAU,24,Color(1.0,0.85,0.61,intensity*0.85),3.0)
         draw_circle(Vector2(facing*radius,-28),4.0 + intensity*3.0,Color(1.0,0.90,0.69,intensity*0.75))
 
-    if health < max_health:
-        var width := 54.0 if enemy_type != "sentinel" else 66.0
+    if health < max_health or hurt_glow > 0.0:
+        var width := 60.0 if enemy_type != "sentinel" else 72.0
         var ratio := clampf(health / max_health, 0.0, 1.0)
-        draw_rect(Rect2(-width*0.5,-68,width,5),Color(0.04,0.05,0.07,0.85))
-        draw_rect(Rect2(-width*0.5,-68,width*ratio,5),Color("#d75b59"))
+        draw_rect(Rect2(-width*0.5,-70,width,7),Color(0.02,0.03,0.05,0.92))
+        draw_rect(Rect2(-width*0.5,-70,width*ratio,7),Color("#e66561"))
+        draw_line(Vector2(-width*0.5,-62),Vector2(width*0.5,-62),Color(1.0,0.87,0.72,0.35),1.0)
 
 func draw_ellipse_shadow() -> void:
     draw_circle(Vector2(0,0),15.0,Color(0.0,0.0,0.0,0.16))
