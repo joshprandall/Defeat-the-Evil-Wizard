@@ -18,6 +18,7 @@ func _ready() -> void:
     _add_key(&"interact", KEY_F)
     _add_key(&"ultimate", KEY_U)
     _add_mouse_attack()
+    _add_mouse_heavy()
 
 func _erase_key(action: StringName, key_code: int) -> void:
     if not InputMap.has_action(action):
@@ -45,3 +46,14 @@ func _add_mouse_attack() -> void:
     var mouse_event := InputEventMouseButton.new()
     mouse_event.button_index = MOUSE_BUTTON_LEFT
     InputMap.action_add_event(&"attack", mouse_event)
+
+
+func _add_mouse_heavy() -> void:
+    if not InputMap.has_action(&"heavy_attack"):
+        return
+    for event: InputEvent in InputMap.action_get_events(&"heavy_attack"):
+        if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_RIGHT:
+            return
+    var mouse_event := InputEventMouseButton.new()
+    mouse_event.button_index = MOUSE_BUTTON_RIGHT
+    InputMap.action_add_event(&"heavy_attack", mouse_event)
