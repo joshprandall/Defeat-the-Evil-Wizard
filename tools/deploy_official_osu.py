@@ -82,15 +82,26 @@ def update_projects(original: bytes) -> bytes:
     return updated.encode("utf-8")
 
 
-def update_project_page(original: bytes) -> bytes:
+def update_project_page(original: bytes) -> tuple[bytes, bool]:
+    """Best-effort project-page update.
+
+    The live OSU page has changed independently over time, so failure to find
+    an older embedded-game URL must never block promotion of the verified game.
+    """
     text = original.decode("utf-8")
-    if "games/evil-wizard/play.html" not in text:
-        if "games/evil-wizard/index.html" not in text:
-            raise ValueError("Expected Evil Wizard project-page game URL was not found.")
-        text = text.replace("games/evil-wizard/index.html", "games/evil-wizard/play.html")
+    before = text
+
+    # Normalize any known live/preview Evil Wizard launch URL to the canonical
+    # adaptive launcher. This intentionally leaves unrelated links untouched.
+    text = re.sub(
+        r'games/evil-wizard(?:-[^"\']+)?/(?:index|console|play)\.html',
+        'games/evil-wizard/play.html',
+        text,
+        flags=re.I,
+    )
     text = text.replace("Open Game Full Window", "Play Fullscreen")
     text = text.replace("PLAYABLE ROUGH DRAFT / v2.0.2", "ADAPTIVE WEB RELEASE / MOBILE + DESKTOP")
-    return text.encode("utf-8")
+    return text.encode("utf-8"), (text != before)
 
 
 def main() -> None:
@@ -129,7 +140,10 @@ def main() -> None:
 
         # Validate page edits before creating any live changes.
         new_projects = update_projects(projects.read_bytes())
-        new_project_page = update_project_page(project_page.read_bytes()) if project_page.exists() else None
+        new_project_page = None
+        project_page_changed = False
+        if project_page.exists():
+            new_project_page, project_page_changed = update_project_page(project_page.read_bytes())
 
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         backup = Path.home() / f"evil-wizard-official-backup-{stamp}"
@@ -157,15 +171,19 @@ def main() -> None:
             swapped = True
 
             atomic_write(projects, new_projects)
-            if project_page.exists() and new_project_page is not None:
+            if project_page.exists() and new_project_page is not None and project_page_changed:
                 atomic_write(project_page, new_project_page)
 
             if not (live / "play.html").is_file() or not (live / "console.html").is_file():
                 raise OSError("New live game verification failed.")
             if b'games/evil-wizard/play.html' not in projects.read_bytes():
                 raise OSError("Portfolio launch-link verification failed after write.")
-            if project_page.exists() and b'games/evil-wizard/play.html' not in project_page.read_bytes():
-                raise OSError("Project-page launch-link verification failed after write.")
+            # The project-detail page is not required for the canonical launch
+            # path. If it contained a recognizable game URL and was updated,
+            # verify only that targeted edit.
+            if project_page.exists() and project_page_changed:
+                if b'games/evil-wizard/play.html' not in project_page.read_bytes():
+                    raise OSError("Project-page launch-link verification failed after write.")
 
             shutil.rmtree(hold)
         except BaseException:
@@ -186,6 +204,8 @@ def main() -> None:
     print("Play:", "https://web.engr.oregonstate.edu/~randjosh/games/evil-wizard/play.html")
     print("Portfolio:", "https://web.engr.oregonstate.edu/~randjosh/projects.html")
     print("Rollback backup:", backup)
+    if project_page.exists() and not project_page_changed:
+        print("Note: play-evil-wizard.html used a different layout, so it was left unchanged.")
     print("Other portfolio projects and the Learning Platform were not changed.")
 
 
