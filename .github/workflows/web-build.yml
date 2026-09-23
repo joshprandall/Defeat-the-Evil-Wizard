@@ -42,6 +42,8 @@ jobs:
                        'top-left', 'top-right', 'data-position="south"', 'data-position="north"',
                        'xbox-label', 'ps-label'):
               assert item in touch, f'Missing floating-controller feature: {item}'
+          assert 'class="dpad"' not in touch, 'Virtual D-pad must not return on phone/tablet controls'
+          assert '--control:54px' in touch and '--joy:112px' in touch, 'Larger default touch control sizing is missing'
           for item in ('keyOptions', 'gamepadOptions', 'PlayStation controller', 'Xbox / standard gamepad',
                        'touch:', 'keyboard:', 'gamepad:', 'masterVolume', 'cameraShake'):
               assert item in shared, f'Missing shared control/settings model: {item}'
