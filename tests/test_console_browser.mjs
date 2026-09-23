@@ -81,9 +81,9 @@ try {
   assert.equal(Math.round(layout.game.h),layout.vh,'Game must remain full viewport behind controls');
   assert(layout.joy.right<layout.vw*.31,'Left joystick must stay near the left edge');
   assert(layout.face.x>layout.vw*.66,'Face controls must stay near the right edge');
-  assert(layout.joy.w>=96,'Phone joystick must be substantially larger than the previous overlay');
-  assert(layout.south.w>=46&&layout.south.h>=46,'Phone face buttons must be substantially larger and touch-friendly');
-  assert(layout.shoulder.h>=30,'Phone shoulder controls must be easier to hit');
+  assert(layout.joy.w>=112,'Phone joystick must be gamepad-scale and easy to acquire');
+  assert(layout.south.w>=54&&layout.south.h>=54,'Phone face buttons must be large gamepad-style touch targets');
+  assert(layout.shoulder.h>=36,'Phone shoulder controls must be easy to hit');
   assert.equal(layout.centerId,'game','Center of gameplay must remain unobstructed');
   assert.match(layout.filter,/brightness\(1\.15\)/,'Brightness setting must apply to touch game');
 
