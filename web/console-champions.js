@@ -61,7 +61,7 @@
   };
 
   const guides = {
-    touch:'Phone / Tablet: use the floating left stick and controller-style overlay. The face-button diamond mirrors a gamepad, shoulders and triggers sit along the top edges, and the game remains visible underneath. Every virtual button can be reassigned in Controls.',
+    touch:'Phone / Tablet: use the larger floating left joystick for movement; pull it downward to crouch. There is no virtual D-pad. The larger face-button diamond mirrors a gamepad, shoulders and triggers sit along the top edges, and the game remains visible underneath. Every virtual action button can be reassigned in Controls.',
     keyboard:'Keyboard / mouse: A / D or ← / → move · S / Q crouch. The action keys below are remappable. Left mouse always performs Attack and right mouse performs Heavy Attack.',
     xbox:'Xbox / standard gamepad: left stick or D-pad moves, down crouches, right stick aims. Every action button can be reassigned in Controls.',
     playstation:'PlayStation controller: left stick or D-pad moves, down crouches, right stick aims. Cross/Circle/Square/Triangle, shoulders and triggers can be reassigned in Controls.'
