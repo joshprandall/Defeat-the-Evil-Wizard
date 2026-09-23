@@ -97,13 +97,14 @@
     if (event.data.type !== 'evil-wizard/state') return;
     if (event.data.playing === true) {
       interactButton.classList.remove('tutorial-pulse');
-      status.textContent = 'Move with the joystick · ATTACK enemies · JUMP onto platforms';
+      picker.hidden = true;
+      status.textContent = 'ATTACK close enemies — damage number + red health bar confirm each hit · JUMP onto platforms';
       status.classList.remove('ready');
       status.classList.add('tutorial');
       window.setTimeout(() => {
         status.classList.remove('tutorial');
         status.classList.add('ready');
-      }, 5500);
+      }, 7500);
     } else if (start.disabled) {
       status.textContent = 'Opening story — tap INTERACT to continue';
       status.classList.remove('ready');
