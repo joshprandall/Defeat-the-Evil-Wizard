@@ -17,25 +17,25 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 from zipfile import ZipFile
 
-BUILD_COMMIT = "9ac3f2e5564464ea0401f1fa5b957b799ee041c6"
-ARTIFACT_ID = 10779396978
+BUILD_COMMIT = "9bb16fa40b4e858f62a36d6d64081304ae68829d"
+ARTIFACT_ID = 10782061500
 ARCHIVE_URL = (
     "https://nightly.link/joshprandall/Defeat-the-Evil-Wizard/"
     f"actions/artifacts/{ARTIFACT_ID}.zip"
 )
 EXPECTED_SHA256 = {
-    "console-champions.js": "9b52e99713dddee0339f215059e53cc244769c05a636a752d3fc932890d26ef0",
-    "console.html": "fe0d12ac7fa0ba2e72f4bdca91a8876cb189fc364163c6c8ccc471b98ecd3d9e",
+    "console-champions.js": "b3fc5fba19f1ea579f5c3e59d9152cef38d8168ef0cc30d7d4ea8ba9b97d6138",
+    "console.html": "f7a3e66c189c04fbe56ddff01968ce3ba465a42fd3fc5c5faac6fe6a07691705",
     "index.apple-touch-icon.png": "01d4f63e525941e06ce74f5187dad030d20a8d52a07ce365ae4e94af97a3b1f5",
     "index.audio.position.worklet.js": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
     "index.audio.worklet.js": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
     "index.html": "d7cd90a0d6c35cc72bb1a37961e76807e630ed1b9f189a0b8d0ddb5c2f4e19ee",
     "index.icon.png": "ad3c35ad0facf487c618204bd98db543034fc95224eadc7f08c7a9ff38d5b3b5",
     "index.js": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba",
-    "index.pck": "d1049b2bd8fa242c66d6162efaad4bfdf239440b9eb27358d57e458a5a731fd9",
+    "index.pck": "11422540e2517920d570895f5fe111837e821a24709a12651e74855f08c0d640",
     "index.png": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
     "index.wasm": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0",
-    "play.html": "f21764000663073692ffaeefef273c6ce9e809c8da3686e9d58b55ff866a4af5",
+    "play.html": "74182fa975f9e3dff72d8d4bcc746b0baa06aae8f310525a1fe942a6d49aedda",
 }
 REQUIRED = {
     "play.html", "console-champions.js", "console.html", "index.apple-touch-icon.png",
@@ -85,6 +85,10 @@ def verify_text(files: dict[str, bytes]) -> None:
     ):
         if marker not in touch:
             fail(f"Floating controller verification failed: missing {marker}")
+    if 'class="dpad"' in touch:
+        fail("Virtual D-pad unexpectedly returned.")
+    if "--control:62px" not in touch or "--joy:128px" not in touch:
+        fail("Large joystick-only touch sizing is missing.")
 
     for marker in (
         "keyOptions",
