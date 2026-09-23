@@ -21,7 +21,7 @@
     .champion-picker{width:100%;max-width:182px;display:flex;flex-direction:column;align-items:stretch;gap:4px}
     .champion-picker label{font-size:10px;letter-spacing:.08em;text-align:center;color:#f4d292;font-weight:800}
     .champion-picker select,.champion-picker button{width:100%;min-height:32px;border:1px solid #8e9aad;border-radius:8px;background:#141b25;color:#f9f3e6;font:600 12px system-ui;padding:4px;touch-action:manipulation}
-    .champion-picker button{background:linear-gradient(#6b5030,#342717);border-color:#e6be76;letter-spacing:.07em}
+    .champion-picker button{background:linear-gradient(#6b5030,#342717);border-color:#e6be76;letter-spacing:.07em}.champion-picker #show-controls{background:#182230;border-color:#8291a6;color:#e8edf5;font-size:10px}
     .champion-picker select:focus-visible,.champion-picker button:focus-visible{outline:2px solid white;outline-offset:2px}
     .console{--control-factor:1}
     .console .screen{box-shadow:inset 0 0 0 1px #8693a055,0 0 18px #e6be7614}
@@ -73,6 +73,12 @@
     option.textContent = caption;
     select.appendChild(option);
   }
+  const help = document.createElement('button');
+  help.id = 'show-controls';
+  help.type = 'button';
+  help.textContent = 'HOW TO PLAY / CONTROLS';
+  help.setAttribute('aria-label','Show game controls and how to play');
+
   const start = document.createElement('button');
   start.id = 'start-champion';
   start.type = 'button';
@@ -87,7 +93,7 @@
     start.disabled = true;
     frame.focus();
   });
-  picker.append(label,select,start);
+  picker.append(label,select,help,start);
   rail.appendChild(picker);
 
   // The Godot bridge reports when the opening cinematic has handed control
@@ -144,7 +150,7 @@
     <label for="console-size">Control size <select id="console-size"><option value="compact">Compact</option><option value="standard">Standard</option><option value="large">Large</option></select></label>
     <label for="console-hand">Control position <select id="console-hand"><option value="right">Joystick left</option><option value="left">Joystick right</option></select></label>
     <label for="console-visibility">Game visibility <select id="console-visibility"><option value="normal">Original</option><option value="clarity">Clearer</option><option value="bright">Brighter</option></select></label>
-    <div class="key-guide"><strong>Desktop Web &amp; keyboard</strong><p>A / D or ← / → move · S / Q crouch · W / E jump · Space / J / left click attack · K heavy · Shift dash · F interact · L / I abilities · U ultimate · Esc pause.</p><strong>Handheld</strong><p>Drag the stick and hold action buttons together. Tap ↑ to jump; ↓ to crouch. Landscape is recommended, but portrait remains playable in browsers that lock orientation.</p></div>
+    <div class="key-guide"><strong>Handheld console</strong><p>Left stick or ← / → moves. ↓ crouches. ATTACK performs the light attack, JUMP jumps, HEAVY performs the heavy attack, DASH evades, ABILITY 1 / 2 use class skills, ULTIMATE uses the full-resource special, and INTERACT advances dialogue or activates objects. Multiple controls can be held at the same time.</p><strong>Desktop keyboard &amp; mouse</strong><p>A / D or ← / → move · S / Q crouch · W / E jump · Space / J / left click attack · K or right click heavy · Shift dash · F interact · L / I abilities · U ultimate · Esc pause.</p><strong>Xbox-compatible controller on PC / large screen</strong><p>Left stick moves · A jumps · B dashes · X attacks · Y heavy attacks · LB / RB use abilities · View/Back interacts · left-stick click uses the ultimate · Menu/Start pauses. The generated handheld console stays hidden on desktop and TV-style layouts.</p></div>
   `;
   document.body.appendChild(dialog);
   for (const name of Object.keys(defaults)) {
@@ -158,13 +164,17 @@
     });
   }
   const close = dialog.querySelector('#console-options-close');
-  const closeDialog = () => { if (dialog.open) dialog.close(); trigger.focus(); };
+  let dialogReturnTarget = trigger;
+  const closeDialog = () => { if (dialog.open) dialog.close(); dialogReturnTarget?.focus?.(); };
   close.addEventListener('click',closeDialog);
-  trigger.addEventListener('click',() => {
+  const openControls = returnTarget => {
+    dialogReturnTarget = returnTarget || trigger;
     // The original console's blur handler releases any held virtual keys.
     window.dispatchEvent(new Event('blur'));
     if (typeof dialog.showModal === 'function') dialog.showModal();
     else dialog.setAttribute('open','');
-  });
+  };
+  trigger.addEventListener('click',()=>openControls(trigger));
+  help.addEventListener('click',()=>openControls(help));
   dialog.addEventListener('click', event => { if (event.target === dialog) closeDialog(); });
 })();
