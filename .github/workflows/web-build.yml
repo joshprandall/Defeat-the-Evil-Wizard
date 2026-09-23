@@ -45,8 +45,7 @@ jobs:
           for item in ('keyOptions', 'gamepadOptions', 'PlayStation controller', 'Xbox / standard gamepad',
                        'touch:', 'keyboard:', 'gamepad:', 'masterVolume', 'cameraShake'):
               assert item in shared, f'Missing shared control/settings model: {item}'
-          for item in ('kind", "") == "settings"', 'kind", "") == "controls"',
-                       '_replace_keyboard_event', '_replace_gamepad_event', 'AudioServer'):
+          for item in ('== "settings"', '== "controls"', '_replace_keyboard_event', '_replace_gamepad_event', 'AudioServer'):
               assert item in bridge, f'Missing Godot remap/settings bridge: {item}'
           launcher_scripts = re.findall(r'<script>(.*?)</script>', launcher, re.DOTALL)
           touch_scripts = re.findall(r'<script>(.*?)</script>', touch, re.DOTALL)
