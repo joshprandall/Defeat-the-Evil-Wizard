@@ -36,13 +36,10 @@ body{width:100dvw;height:100dvh}
   const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(ua);
   const iPadDesktopUA = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
   const knownHandheldPC = /Steam Deck|SteamOS|ROG Ally|Legion Go|AYANEO|OneXPlayer|GPD WIN/i.test(ua);
-  const primaryCoarse = matchMedia('(pointer:coarse)').matches;
-  const anyFine = matchMedia('(any-pointer:fine)').matches;
-  // <=900 catches Steam Deck-class screens even when a trackpad exposes a fine
-  // pointer. 901–1100 requires touch-first/no-fine-pointer behavior, which
-  // covers Ally-class handhelds without turning normal touch laptops into consoles.
-  const compactTouchDevice = navigator.maxTouchPoints > 0 &&
-    (shortEdge <= 900 || (shortEdge <= 1100 && primaryCoarse && !anyFine));
+  // Compact touch screens are treated as handheld even when a trackpad exposes
+  // a fine pointer. Larger Windows touch displays remain desktop by default;
+  // mode=handheld is the explicit fallback for an unusual handheld browser.
+  const compactTouchDevice = navigator.maxTouchPoints > 0 && shortEdge <= 900;
   const handheld = forced === 'handheld' ||
     (forced !== 'desktop' && (mobileUA || iPadDesktopUA || knownHandheldPC || compactTouchDevice));
 
