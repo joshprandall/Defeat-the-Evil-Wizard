@@ -2034,7 +2034,9 @@ func _strike(damage: float, reach: float, height: float, knockback: float, stun:
     var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
     var rect: RectangleShape2D = RectangleShape2D.new()
     rect.size = Vector2(reach,height)
-    var direction: Vector2 = aim_direction if aim_direction.length()>0.1 else Vector2(facing,0.0)
+    # Melee follows the hero's facing direction so keyboard and handheld
+    # attacks are deterministic even when there is no mouse/right-stick aim.
+    var direction: Vector2 = Vector2(facing,0.0)
     var center: Vector2 = global_position+Vector2(0,-30)+direction*(reach*0.5+18.0)
     rect.size = Vector2(reach,height)
     query.shape = rect
