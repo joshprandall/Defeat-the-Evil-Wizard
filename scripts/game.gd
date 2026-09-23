@@ -2242,21 +2242,32 @@ func _on_boss_died() -> void:
 
 
 func _install_gamepad_defaults() -> void:
+    # Xbox-style / standard gamepad profile.
+    # Left stick + D-pad move; right stick aiming is read directly by Hero.
     _add_joy_axis("move_left",0,-1.0)
     _add_joy_axis("move_right",0,1.0)
-    _add_joy_button("jump",0)
-    _add_joy_button("dash",1)
-    _add_joy_button("attack",2)
-    _add_joy_button("heavy_attack",3)
-    _add_joy_button("ability_one",9)
-    _add_joy_button("ability_two",10)
-    _add_joy_button("ultimate",7)
-    _add_joy_button("interact",4)
-    _add_joy_button("pause",6)
+    _add_joy_axis("move_down",1,1.0)
+    _add_joy_button("move_left",13)   # D-pad left
+    _add_joy_button("move_right",14)  # D-pad right
+    _add_joy_button("move_down",12)   # D-pad down / crouch
+    _add_joy_button("jump",0)         # A
+    _add_joy_button("dash",1)         # B
+    _add_joy_button("attack",2)       # X
+    _add_joy_button("heavy_attack",3) # Y
+    _add_joy_button("ability_one",9)  # LB
+    _add_joy_button("ability_two",10) # RB
+    _add_joy_axis("interact",4,1.0)   # LT
+    _add_joy_axis("ultimate",5,1.0)   # RT
+    _add_joy_button("interact",4)     # View / Back fallback
+    _add_joy_button("ultimate",7)     # Left-stick click fallback
+    _add_joy_button("pause",6)        # Menu / Start
 
 func _add_joy_button(action: String, button_index: int) -> void:
     if not InputMap.has_action(action):
         return
+    for existing: InputEvent in InputMap.action_get_events(action):
+        if existing is InputEventJoypadButton and (existing as InputEventJoypadButton).button_index == button_index:
+            return
     var event: InputEventJoypadButton = InputEventJoypadButton.new()
     event.button_index = button_index
     InputMap.action_add_event(action,event)
@@ -2264,6 +2275,11 @@ func _add_joy_button(action: String, button_index: int) -> void:
 func _add_joy_axis(action: String, axis: int, value: float) -> void:
     if not InputMap.has_action(action):
         return
+    for existing: InputEvent in InputMap.action_get_events(action):
+        if existing is InputEventJoypadMotion:
+            var motion := existing as InputEventJoypadMotion
+            if motion.axis == axis and is_equal_approx(motion.axis_value,value):
+                return
     var event: InputEventJoypadMotion = InputEventJoypadMotion.new()
     event.axis = axis
     event.axis_value = value
