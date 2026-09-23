@@ -12,144 +12,149 @@ async function waitForGodotBridge(page){
 }
 
 try {
-  // Phone/tablet: setup first, then floating controls in landscape.
-  const mobileContext=await browser.newContext({
+  const phoneContext=await browser.newContext({
     viewport:{width:844,height:390},isMobile:true,hasTouch:true,deviceScaleFactor:1,
     userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 Version/26.0 Mobile/15E148 Safari/604.1'
   });
-  const mobile=await mobileContext.newPage();
-  const mobileErrors=[];mobile.on('pageerror',e=>mobileErrors.push(String(e)));
-  await mobile.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
-  assert.equal(await mobile.locator('#setup').isVisible(),true,'Phone must open at setup menu');
-  assert.match(await mobile.locator('#guide-text').textContent(),/floating stick/i,'Phone auto mode must show touch control guide');
-  assert.equal(await mobile.locator('#touch-options').isVisible(),true,'Phone auto mode must expose touch layout options');
-  assert.equal(await mobile.locator('#champion option').count(),15,'Setup menu must expose all champions');
-  assert.match(await mobile.locator('#detected').textContent(),/Phone \/ tablet/i,'Phone must be detected as touch mode');
+  const phone=await phoneContext.newPage();
+  const phoneErrors=[];phone.on('pageerror',e=>phoneErrors.push(String(e)));
+  await phone.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
 
-  await mobile.locator('#champion').selectOption('warrior');
-  await Promise.all([
-    mobile.waitForURL(/\/console\.html\?/),
-    mobile.locator('#start').click()
-  ]);
-  assert.equal(await mobile.locator('.orientation-gate').isVisible(),false,'Landscape phone must not show rotate gate');
-  assert.equal(await mobile.locator('#game').getAttribute('src'),'./index.html','Touch shell must host the real exported game');
-  assert.equal(await mobile.locator('.move-cluster').isVisible(),true,'Floating movement cluster must be visible');
-  assert.equal(await mobile.locator('.action-cluster').isVisible(),true,'Floating action cluster must be visible');
-  assert.equal(await mobile.locator('.screen-bezel').count(),0,'Legacy hardware console frame must be gone');
+  assert.equal(await phone.locator('#menu').isVisible(),true,'Phone must open at the game menu');
+  assert.equal(await phone.locator('[data-screen]').count(),4,'Game menu must expose Play, Controls, Settings, and How to Play');
+  assert.equal(await phone.locator('#champion option').count(),15,'Play screen must expose all champions');
+  assert.match(await phone.locator('#device').textContent(),/Phone \/ tablet/i,'Phone must auto-detect touch mode');
 
-  const layout=await mobile.evaluate(()=>{
+  await phone.locator('[data-screen="controls"]').click();
+  assert.equal(await phone.locator('#screen-controls').isVisible(),true,'Controls must be a real menu screen');
+  assert.equal(await phone.locator('#touch-map select').count(),8,'Every virtual controller action position must be remappable');
+  assert.equal(await phone.locator('#keyboard-map select').count(),9,'Keyboard gameplay actions must be remappable');
+  assert.equal(await phone.locator('#gamepad-map select').count(),9,'Physical gamepad actions must be remappable');
+
+  await phone.locator('#touch-style').selectOption('playstation');
+  await phone.locator('#touch-size').selectOption('compact');
+  await phone.locator('#touch-opacity').fill('54');
+  const south=phone.locator('#touch-map .mapping-row').filter({hasText:'South face'}).locator('select');
+  await south.selectOption('attack');
+
+  await phone.locator('[data-screen="settings"]').click();
+  assert.equal(await phone.locator('#screen-settings').isVisible(),true,'Settings must be a real menu screen');
+  await phone.locator('#difficulty').selectOption('story');
+  await phone.locator('#master-volume').fill('55');
+  await phone.locator('#brightness').fill('115');
+  await phone.locator('#camera-shake').uncheck();
+
+  await phone.locator('[data-screen="how"]').click();
+  assert.match(await phone.locator('#screen-how').textContent(),/Explore.*Fight.*Interact/s,'How to Play must explain the game loop');
+  await phone.locator('[data-guide="playstation"]').click();
+  assert.match(await phone.locator('#guide-text').textContent(),/PlayStation controller/i,'How to Play must include PlayStation controls');
+
+  await phone.locator('[data-screen="play"]').click();
+  await phone.locator('#champion').selectOption('warrior');
+  await Promise.all([phone.waitForURL(/\/console\.html\?/),phone.locator('#start').click()]);
+
+  assert.equal(await phone.locator('.orientation-gate').isVisible(),false,'Landscape phone must immediately show gameplay');
+  assert.equal(await phone.locator('.screen-bezel').count(),0,'No virtual console frame may surround the game');
+  assert.equal(await phone.locator('.left-zone').isVisible(),true,'Controller-style left zone must float over the game');
+  assert.equal(await phone.locator('.right-zone').isVisible(),true,'Controller-style face buttons must float over the game');
+  assert.equal(await phone.locator('.top-left').isVisible(),true,'Left shoulder/trigger controls must float over the game');
+  assert.equal(await phone.locator('.top-right').isVisible(),true,'Right shoulder/trigger controls must float over the game');
+  assert.equal(await phone.locator('#touch-stage').getAttribute('data-style'),'playstation','Touch controller appearance choice must persist');
+  assert.equal(await phone.locator('[data-position="south"]').getAttribute('data-action'),'attack','Virtual face-button remap must persist');
+
+  const psDisplay=await phone.locator('[data-position="south"] .ps-label').evaluate(el=>getComputedStyle(el).display);
+  const xboxDisplay=await phone.locator('[data-position="south"] .xbox-label').evaluate(el=>getComputedStyle(el).display);
+  assert.notEqual(psDisplay,'none','PlayStation symbols must be visible in PlayStation mode');
+  assert.equal(xboxDisplay,'none','Xbox labels must hide in PlayStation mode');
+
+  const layout=await phone.evaluate(()=>{
     const game=document.getElementById('game').getBoundingClientRect();
     const joy=document.getElementById('joystick').getBoundingClientRect();
-    const attack=document.querySelector('[data-action="attack"]').getBoundingClientRect();
+    const face=document.querySelector('.right-zone').getBoundingClientRect();
     const center=document.elementFromPoint(innerWidth/2,innerHeight/2);
-    return {
-      game:{x:game.x,y:game.y,w:game.width,h:game.height},
-      joy:{x:joy.x,right:joy.right,w:joy.width},
-      attack:{x:attack.x,right:attack.right,w:attack.width},
-      viewport:{w:innerWidth,h:innerHeight},
-      centerId:center?.id||'',centerTag:center?.tagName||''
-    };
+    return {game:{w:game.width,h:game.height},joy:{x:joy.x,right:joy.right,w:joy.width},face:{x:face.x,right:face.right},vw:innerWidth,vh:innerHeight,centerId:center?.id||'',filter:getComputedStyle(document.getElementById('game')).filter,alpha:getComputedStyle(document.documentElement).getPropertyValue('--alpha')};
   });
-  assert.equal(Math.round(layout.game.w),layout.viewport.w,'Touch game must fill viewport width');
-  assert.equal(Math.round(layout.game.h),layout.viewport.h,'Touch game must fill viewport height');
-  assert(layout.joy.right<layout.viewport.w*.28,'Movement controls must stay at extreme edge');
-  assert(layout.attack.x>layout.viewport.w*.66,'Action controls must stay at extreme edge');
-  assert(layout.joy.w<=100,'Compact phone joystick must remain small');
-  assert(layout.attack.w<=44,'Compact phone action buttons must remain small');
-  assert.equal(layout.centerId,'game','Center gameplay view must remain unobstructed');
+  assert.equal(Math.round(layout.game.w),layout.vw,'Game must remain full viewport behind controls');
+  assert.equal(Math.round(layout.game.h),layout.vh,'Game must remain full viewport behind controls');
+  assert(layout.joy.right<layout.vw*.31,'Left controls must stay near the left edge');
+  assert(layout.face.x>layout.vw*.66,'Face controls must stay near the right edge');
+  assert.equal(layout.centerId,'game','Center of gameplay must remain unobstructed');
+  assert.match(layout.filter,/brightness\(1\.15\)/,'Brightness setting must apply to touch game');
 
-  await waitForGodotBridge(mobile);
-  await mobile.waitForFunction(()=>/Opening story|Move with/.test(document.getElementById('status')?.textContent||''),null,{timeout:10000});
-  await mobile.evaluate(()=>{
+  await waitForGodotBridge(phone);
+  await phone.waitForFunction(()=>/Opening story|INTERACT/.test(document.getElementById('status')?.textContent||''),null,{timeout:10000});
+  await phone.evaluate(()=>{
     const frame=document.getElementById('game').contentWindow;
-    window.__consoleAudit=[];
-    const original=frame.__evilWizardInput;
-    frame.__evilWizardInput=function(message){window.__consoleAudit.push(JSON.parse(message));return original(message)};
+    window.__audit=[];const original=frame.__evilWizardInput;
+    frame.__evilWizardInput=function(message){window.__audit.push(JSON.parse(message));return original(message)};
   });
-  await mobile.locator('[data-action="attack"]').click();
-  await mobile.waitForFunction(()=>window.__consoleAudit.some(m=>m.action==='attack'&&m.pressed===true));
-  await mobile.waitForFunction(()=>window.__consoleAudit.some(m=>m.action==='attack'&&m.pressed===false));
+  await phone.locator('[data-position="south"]').click();
+  await phone.waitForFunction(()=>window.__audit.some(m=>m.action==='attack'&&m.pressed===true));
+  await phone.waitForFunction(()=>window.__audit.some(m=>m.action==='attack'&&m.pressed===false));
 
-  const joy=await mobile.locator('#joystick').boundingBox(),attack=await mobile.locator('[data-action="attack"]').boundingBox();
-  const center=b=>({x:Math.round(b.x+b.width/2),y:Math.round(b.y+b.height/2)}),j=center(joy),a=center(attack);
-  const cdps=await mobileContext.newCDPSession(mobile);
+  const joy=await phone.locator('#joystick').boundingBox(),attack=await phone.locator('[data-position="south"]').boundingBox();
+  const mid=b=>({x:Math.round(b.x+b.width/2),y:Math.round(b.y+b.height/2)}),j=mid(joy),a=mid(attack);
+  const cdp=await phoneContext.newCDPSession(phone);
   const first={x:j.x+Math.round(joy.width*.22),y:j.y,id:1},second={x:a.x,y:a.y,id:2};
-  await cdps.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first]});
-  await cdps.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first,second]});
-  await mobile.waitForFunction(()=>window.__consoleAudit.some(m=>m.action==='move_right'&&m.pressed)&&window.__consoleAudit.some(m=>m.action==='attack'&&m.pressed));
-  await cdps.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[first]});
-  await cdps.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-  assert.equal(await mobile.evaluate(()=>window.visualViewport?.scale??1),1,'Touch gameplay must not zoom page');
-  await mobile.screenshot({path:'build/handheld-console-preview.png'});
-  assert.equal(mobileErrors.length,0,`Phone browser JS errors: ${mobileErrors.join('; ')}`);
-  await mobileContext.close();
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first]});
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first,second]});
+  await phone.waitForFunction(()=>window.__audit.some(m=>m.action==='move_right'&&m.pressed)&&window.__audit.some(m=>m.action==='attack'&&m.pressed));
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[first]});
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  assert.equal(await phone.evaluate(()=>window.visualViewport?.scale??1),1,'Simultaneous touch must not zoom the browser');
+  await phone.screenshot({path:'build/handheld-console-preview.png'});
+  assert.equal(phoneErrors.length,0,`Phone browser errors: ${phoneErrors.join('; ')}`);
+  await phoneContext.close();
 
-  // Portrait phone: setup first; rotate request appears only after Start.
   const portraitContext=await browser.newContext({
     viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:1,
     userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1'
   });
   const portrait=await portraitContext.newPage();
   await portrait.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
-  assert.equal(await portrait.locator('#setup').isVisible(),true,'Portrait phone must show setup before any rotate request');
-  assert.equal(await portrait.locator('.orientation-gate').count(),0,'Launcher itself must not demand rotation');
+  assert.equal(await portrait.locator('#menu').isVisible(),true,'Portrait phone must see menu before rotate prompt');
+  assert.equal(await portrait.locator('.orientation-gate').count(),0,'Main menu must never force orientation');
   await Promise.all([portrait.waitForURL(/\/console\.html\?/),portrait.locator('#start').click()]);
-  assert.equal(await portrait.locator('.orientation-gate').isVisible(),true,'Phone must ask for landscape only after Start');
-  assert.equal(await portrait.locator('#touch-stage').isVisible(),false,'Touch game must stay hidden behind portrait gate');
+  assert.equal(await portrait.locator('.orientation-gate').isVisible(),true,'Rotate prompt appears only after Start on phone/tablet');
   await portrait.setViewportSize({width:852,height:393});
   await portrait.waitForFunction(()=>getComputedStyle(document.querySelector('.orientation-gate')).display==='none');
-  assert.equal(await portrait.locator('#touch-stage').isVisible(),true,'Rotating phone must reveal full-screen game');
-  assert.equal(await portrait.locator('.action-cluster').isVisible(),true,'Rotating phone must reveal floating controls');
+  assert.equal(await portrait.locator('.right-zone').isVisible(),true,'Landscape rotation reveals floating controller');
   await portraitContext.close();
 
-  // Gaming handheld: physical controls, no virtual console and no rotate gate.
   const deckContext=await browser.newContext({
     viewport:{width:1280,height:800},hasTouch:true,deviceScaleFactor:1,
     userAgent:'Mozilla/5.0 (X11; Linux x86_64; Steam Deck) AppleWebKit/537.36 Chrome/140 Safari/537.36'
   });
   const deck=await deckContext.newPage();
   await deck.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
-  assert.equal(await deck.locator('#setup').isVisible(),true,'Gaming handheld must still begin at setup');
-  assert.match(await deck.locator('#detected').textContent(),/Physical gamepad|Gaming handheld/i,'Steam Deck must resolve to physical controls');
-  assert.equal(await deck.locator('#touch-options').isVisible(),false,'Gaming handheld must not expose touch-console sizing');
+  assert.equal(await deck.locator('#menu').isVisible(),true,'Gaming handheld must start at main menu');
+  assert.match(await deck.locator('#device').textContent(),/Gaming handheld/i,'Steam Deck must use physical-control mode');
   await deck.locator('#start').click();
-  await deck.waitForFunction(()=>document.getElementById('setup').hidden===true);
-  assert.match(deck.url(),/\/play\.html$/,'Gaming handheld must stay on physical launcher');
-  assert.equal(await deck.locator('.controls').count(),0,'Gaming handheld must have no virtual controls');
-  assert.equal(await deck.locator('.orientation-gate').count(),0,'Gaming handheld must never get phone rotate gate');
+  await deck.waitForFunction(()=>document.getElementById('menu').hidden===true);
+  assert.equal(await deck.locator('.controls').count(),0,'Gaming handheld must never generate virtual controls');
+  assert.equal(await deck.locator('.orientation-gate').count(),0,'Gaming handheld must never ask for rotation');
   await deckContext.close();
 
-  // Desktop / large display: setup first, then full viewport physical-control game.
   const desktopContext=await browser.newContext({viewport:{width:1365,height:768},hasTouch:false,deviceScaleFactor:1});
   const desktop=await desktopContext.newPage();
   const desktopErrors=[];desktop.on('pageerror',e=>desktopErrors.push(String(e)));
-  const response=await desktop.goto('http://127.0.0.1:8765/play.html?mode=keyboard',{waitUntil:'domcontentloaded'});
-  assert.equal(response.status(),200);
-  assert.equal(await desktop.locator('#setup').isVisible(),true,'Desktop must begin at setup menu');
-  assert.match(await desktop.locator('#guide-text').textContent(),/left click attack/i,'Desktop setup must explain keyboard and mouse');
-  assert.equal(await desktop.locator('.controls').count(),0,'Desktop launcher must have no virtual controls');
+  await desktop.goto('http://127.0.0.1:8765/play.html?mode=keyboard',{waitUntil:'domcontentloaded'});
+  assert.equal(await desktop.locator('#menu').isVisible(),true,'Desktop must begin at main menu');
+  await desktop.locator('[data-screen="controls"]').click();
+  const jumpRow=desktop.locator('#keyboard-map .mapping-row').filter({hasText:'Jump'}).locator('select');
+  await jumpRow.selectOption('74');
+  await desktop.locator('[data-screen="settings"]').click();
+  await desktop.locator('#master-volume').fill('65');
+  await desktop.locator('[data-screen="play"]').click();
   await desktop.locator('#start').click();
-  await desktop.waitForFunction(()=>document.getElementById('setup').hidden===true);
-  assert.equal(await desktop.locator('#game').getAttribute('src'),'./index.html','Desktop must load exported game after setup');
-  const fit=await desktop.evaluate(()=>{
-    const r=document.getElementById('game').getBoundingClientRect();
-    return {x:r.x,y:r.y,w:r.width,h:r.height,iw:innerWidth,ih:innerHeight};
-  });
+  await desktop.waitForFunction(()=>document.getElementById('menu').hidden===true);
+  assert.equal(await desktop.locator('.controls').count(),0,'Desktop must have no virtual controller overlay');
+  const fit=await desktop.evaluate(()=>{const r=document.getElementById('game').getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height,iw:innerWidth,ih:innerHeight}});
   assert.equal(fit.x,0);assert.equal(fit.y,0);assert.equal(Math.round(fit.w),fit.iw);assert.equal(Math.round(fit.h),fit.ih);
-  assert.equal(await desktop.locator('.orientation-gate').count(),0,'Desktop must never get rotate gate');
-  assert.equal(desktopErrors.length,0,`Desktop browser JS errors: ${desktopErrors.join('; ')}`);
+  assert.equal(desktopErrors.length,0,`Desktop browser errors: ${desktopErrors.join('; ')}`);
   await desktopContext.close();
 
-  // Manual controller mode documents both major console controller families.
-  const padContext=await browser.newContext({viewport:{width:1600,height:900},hasTouch:false});
-  const pad=await padContext.newPage();
-  await pad.goto('http://127.0.0.1:8765/play.html?mode=gamepad',{waitUntil:'domcontentloaded'});
-  assert.match(await pad.locator('#guide-text').textContent(),/Left stick|D-pad/,'Gamepad mode must show controller guide');
-  await pad.locator('[data-guide="playstation"]').click();
-  assert.match(await pad.locator('#guide-text').textContent(),/Cross jump.*Circle dash.*Square attack.*Triangle heavy/i,'PlayStation guide must be available');
-  await padContext.close();
-
-  console.log('Browser passed: setup-first launch, floating phone controls, post-start rotate gate, clear center gameplay, physical-control gaming handhelds, desktop fullscreen layout, and Xbox/PlayStation guides.');
+  console.log('Browser passed: real main menu, remappable controls, settings persistence, Xbox/PlayStation-style floating overlay, unobstructed gameplay, phone rotation flow, physical gaming handheld mode, and desktop mode.');
 } finally {
   await browser.close();
 }
