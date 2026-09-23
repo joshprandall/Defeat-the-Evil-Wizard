@@ -10,6 +10,8 @@ const CHAMPIONS := ["warrior", "mage", "rogue", "paladin", "archer", "barbarian"
 var _js_callback: JavaScriptObject
 var _console_active := false
 var _held: Dictionary = {} # pointer ID -> action; independent fingers/mouse buttons
+var _reported_playing := false
+var _has_reported_playing := false
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
@@ -36,6 +38,17 @@ func _ready() -> void:
         })();
     """)
 
+func _process(_delta: float) -> void:
+    if not _console_active or not OS.has_feature("web"):
+        return
+    var playing: bool = _game_is_playing()
+    if _has_reported_playing and playing == _reported_playing:
+        return
+    _reported_playing = playing
+    _has_reported_playing = true
+    var literal: String = "true" if playing else "false"
+    JavaScriptBridge.eval("window.parent.postMessage({type:'evil-wizard/state',playing:%s}, window.location.origin)" % literal)
+
 func _exit_tree() -> void:
     _release_all()
     if OS.has_feature("web"):
@@ -59,6 +72,7 @@ func _receive_payload(payload: Dictionary) -> void:
         return
     if str(payload.get("kind", "")) == "init":
         _console_active = true
+        _has_reported_playing = false
         _disable_legacy_touch_overlay()
         if OS.has_feature("web"):
             JavaScriptBridge.eval("window.parent.postMessage({type:'evil-wizard/ready'}, window.location.origin)")
