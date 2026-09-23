@@ -65,6 +65,7 @@ func _run() -> void:
     if failures == 0:
         print("Mobile gameplay regression tests passed.")
         quit(0)
+        return
     printerr("%d mobile gameplay regression tests failed." % failures)
     quit(1)
 
