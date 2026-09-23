@@ -6,101 +6,193 @@
 <meta name="theme-color" content="#05070b">
 <title>Defeat the Evil Wizard</title>
 <style>
+:root{color-scheme:dark;--gold:#e6be76;--ink:#f5f1e8;--muted:#aeb8c8;--line:#526071;--panel:#101722;--panel2:#182231}
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;background:#05070b;overflow:hidden}
-body{width:100dvw;height:100dvh}
-#desktop-shell{position:fixed;inset:0;width:100dvw;height:100dvh;background:#05070b}
-#game{display:block;width:100%;height:100%;border:0;margin:0;background:#05070b}
-#enter{position:fixed;inset:0;z-index:5;display:grid;place-items:center;border:0;margin:0;padding:24px;background:linear-gradient(#05070bd9,#05070bf2);color:#f4ead6;font:700 clamp(16px,2vw,24px)/1.35 system-ui,-apple-system,Segoe UI,sans-serif;text-align:center;cursor:pointer}
-#enter[hidden]{display:none}
-#enter span{display:block;max-width:680px;padding:16px 22px;border:1px solid #6d7786;border-radius:12px;background:#11161ddd;box-shadow:0 12px 40px #0008}
-#enter small{display:block;margin-top:7px;color:#bfc7d4;font-size:.65em;font-weight:500}
-:fullscreen #desktop-shell,:fullscreen body,:fullscreen html{width:100%;height:100%}
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+body{width:100dvw;height:100dvh;color:var(--ink);font:500 15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+button,select,input{font:inherit}
+button{cursor:pointer;color:inherit}
+#game-shell{position:fixed;inset:0;background:#05070b}
+#game{display:block;width:100%;height:100%;border:0;background:#05070b}
+#game-status{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));z-index:20;transform:translateX(-50%);max-width:min(90vw,720px);padding:7px 14px;border:1px solid #6f7d90;border-radius:999px;background:#0b1018e8;color:#ead9b2;font-size:12px;text-align:center;pointer-events:none}
+#game-status[hidden]{display:none}
+#setup{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:clamp(14px,3vw,34px);overflow:auto;background:
+radial-gradient(circle at 50% 0,#242d3a88,transparent 42%),
+linear-gradient(160deg,#080b11,#111823 58%,#07090d)}
+#setup[hidden]{display:none}
+.setup-card{width:min(980px,100%);max-height:calc(100dvh - 28px);overflow:auto;border:1px solid #637185;border-radius:18px;background:#0e141deF;box-shadow:0 28px 90px #000c;padding:clamp(18px,3vw,32px)}
+.title-row{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}
+.eyebrow{margin:0 0 6px;color:var(--gold);font-size:11px;font-weight:900;letter-spacing:.18em}
+h1{margin:0;font-size:clamp(30px,5vw,58px);line-height:.94;letter-spacing:-.04em}
+.subtitle{max-width:680px;margin:12px 0 0;color:#c4ccd7}
+.detected{flex:none;max-width:230px;padding:9px 11px;border:1px solid #465468;border-radius:10px;background:#141d29;color:#d5dce5;font-size:11px}
+.setup-grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(300px,.92fr);gap:22px;margin-top:24px}
+.panel{border:1px solid #384657;border-radius:13px;background:#0b1119;padding:16px}
+.panel h2{margin:0 0 10px;font-size:17px;color:#f4d291}
+.panel p{margin:7px 0;color:#c3ccd8;font-size:13px}
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0}
+.flow div{padding:10px;border:1px solid #334050;border-radius:9px;background:#121a25;font-size:11px;color:#ced6e0}
+.flow strong{display:block;color:#fff;margin-bottom:2px}
+.guide-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 8px}
+.guide-tabs button{min-height:36px;border:1px solid #536277;border-radius:8px;background:#161f2b;padding:6px 10px;font-size:11px}
+.guide-tabs button[aria-selected="true"]{border-color:var(--gold);background:#3b3021;color:#fff0cf}
+#guide-text{min-height:76px;padding:11px;border:1px solid #303d4d;border-radius:9px;background:#090e15;color:#dce2ea;font-size:12px}
+.fields{display:grid;gap:12px}
+.field{display:grid;gap:5px}
+.field label,.field>span{font-size:11px;font-weight:800;letter-spacing:.07em;color:#d6deea}
+.field select{width:100%;min-height:44px;border:1px solid #637188;border-radius:9px;background:#111925;color:#f8f4ea;padding:8px 10px}
+.inline{display:flex;align-items:center;gap:9px;color:#d4dbe5;font-size:12px}
+.inline input{width:18px;height:18px}
+.touch-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:3px}
+.touch-options[hidden]{display:none}
+.start{width:100%;min-height:52px;margin-top:4px;border:1px solid #f0c774;border-radius:10px;background:linear-gradient(#72512a,#392817);color:#fff5e2;font-size:14px;font-weight:900;letter-spacing:.08em}
+.start:focus-visible,.guide-tabs button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.note{margin-top:10px;color:#929eae;font-size:10px}
+@media(max-width:760px){.title-row{display:block}.detected{max-width:none;margin-top:14px}.setup-grid{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.setup-card{max-height:calc(100dvh - 16px);padding:16px}.touch-options{grid-template-columns:1fr 1fr}}
+@media(max-height:520px) and (orientation:landscape){#setup{place-items:start center}.setup-card{max-height:none}.setup-grid{grid-template-columns:1fr 1fr}.flow{display:none}h1{font-size:34px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
+<script src="./console-champions.js"></script>
 </head>
 <body>
-<div id="desktop-shell">
-  <iframe id="game" title="Defeat the Evil Wizard" src="./index.html" allow="fullscreen; gamepad" allowfullscreen></iframe>
-</div>
-<button id="enter" type="button" aria-label="Enter fullscreen and play">
-  <span>DEFEND THE REALM<small>Click/tap, press a key, or press a button on a connected controller to begin. Keyboard, mouse, and Xbox-compatible gamepads are supported.</small></span>
-</button>
+<div id="game-shell" aria-hidden="true"><iframe id="game" title="Defeat the Evil Wizard" src="about:blank" allow="fullscreen; gamepad" allowfullscreen tabindex="0"></iframe></div>
+<div id="game-status" hidden role="status" aria-live="polite">Loading game…</div>
+<main id="setup" aria-label="Defeat the Evil Wizard setup">
+  <section class="setup-card">
+    <div class="title-row">
+      <div><p class="eyebrow">JR · WIZARD</p><h1>Defeat the<br>Evil Wizard</h1><p class="subtitle">Choose how you want to play, review the controls, select your champion, then start. Phones and tablets use floating touch controls. PCs, consoles, and gaming handhelds use their physical controls.</p></div>
+      <div class="detected" id="detected">Detecting your device…</div>
+    </div>
+    <div class="setup-grid">
+      <section class="panel">
+        <h2>How the game works</h2>
+        <p>Explore an interconnected dark-fantasy campaign, fight enemies and bosses, activate objects, solve environmental puzzles, collect Arcane Shards, unlock checkpoints, and build your champion through the realm.</p>
+        <div class="flow"><div><strong>1 · Explore</strong>Move through the world, discover routes, shrines, gates and story beats.</div><div><strong>2 · Fight &amp; solve</strong>Combine movement, attacks, class abilities and interaction with environmental puzzles.</div><div><strong>3 · Progress</strong>Reach checkpoints, defeat bosses and carry your journey forward.</div></div>
+        <h2>Controls</h2>
+        <div class="guide-tabs" role="tablist" aria-label="Control guides">
+          <button type="button" data-guide="touch" role="tab">Phone / Tablet</button>
+          <button type="button" data-guide="keyboard" role="tab">Keyboard / Mouse</button>
+          <button type="button" data-guide="xbox" role="tab">Xbox / Gamepad</button>
+          <button type="button" data-guide="playstation" role="tab">PlayStation</button>
+        </div>
+        <div id="guide-text" role="tabpanel"></div>
+      </section>
+      <section class="panel fields">
+        <h2>Game setup</h2>
+        <div class="field"><label for="champion">Champion</label><select id="champion"></select></div>
+        <div class="field"><label for="input-mode">Input mode</label><select id="input-mode">
+          <option value="auto">Auto detect</option>
+          <option value="touch">Phone / tablet touch controls</option>
+          <option value="keyboard">Keyboard + mouse</option>
+          <option value="gamepad">Xbox / PlayStation / compatible controller</option>
+          <option value="handheld">Gaming handheld physical controls</option>
+        </select></div>
+        <div class="touch-options" id="touch-options" hidden>
+          <div class="field"><label for="touch-size">Touch control size</label><select id="touch-size"><option value="compact">Compact</option><option value="standard">Standard</option></select></div>
+          <div class="field"><label for="touch-hand">Touch layout</label><select id="touch-hand"><option value="right">Stick left / actions right</option><option value="left">Stick right / actions left</option></select></div>
+        </div>
+        <label class="inline"><input id="fullscreen" type="checkbox" checked> Use fullscreen when the browser allows it</label>
+        <button class="start" id="start" type="button">START GAME</button>
+        <p class="note">Auto detect uses touch controls only for phones/tablets. Steam Deck, ROG Ally, Legion Go, desktop/laptop systems, Xbox/PlayStation browser environments, and other physical-controller setups remain virtual-control free. Use Input mode to override detection if needed.</p>
+      </section>
+    </div>
+  </section>
+</main>
 <script>
 'use strict';
 (() => {
-  const params = new URLSearchParams(location.search);
-  const forced = params.get('mode');
-  const ua = navigator.userAgent || '';
-  const shortEdge = Math.min(screen.width || innerWidth, screen.height || innerHeight);
-  const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(ua);
-  const iPadDesktopUA = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  const knownHandheldPC = /Steam Deck|SteamOS|ROG Ally|Legion Go|AYANEO|OneXPlayer|GPD WIN/i.test(ua);
-  // Compact touch screens are treated as handheld even when a trackpad exposes
-  // a fine pointer. Larger Windows touch displays remain desktop by default;
-  // mode=handheld is the explicit fallback for an unusual handheld browser.
-  const compactTouchDevice = navigator.maxTouchPoints > 0 && shortEdge <= 900;
-  const handheld = forced === 'handheld' ||
-    (forced !== 'desktop' && (mobileUA || iPadDesktopUA || knownHandheldPC || compactTouchDevice));
+  const config = window.EvilWizardSetup || {champions:[],guides:{}};
+  const setup=document.getElementById('setup'),frame=document.getElementById('game'),status=document.getElementById('game-status');
+  const champion=document.getElementById('champion'),modeSelect=document.getElementById('input-mode'),touchOptions=document.getElementById('touch-options');
+  const touchSize=document.getElementById('touch-size'),touchHand=document.getElementById('touch-hand'),fullscreen=document.getElementById('fullscreen'),detected=document.getElementById('detected');
+  const params=new URLSearchParams(location.search), ua=navigator.userAgent||'';
+  const mobileUA=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(ua);
+  const iPadDesktop=navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1;
+  const knownHandheld=/Steam Deck|SteamOS|ROG Ally|Legion Go|AYANEO|OneXPlayer|GPD WIN/i.test(ua);
+  const consoleUA=/Xbox|PlayStation/i.test(ua);
+  const phoneTablet=mobileUA||iPadDesktop;
 
-  // Handheld mode is reserved for phones, tablets, and compact gaming hardware.
-  // Desktop/laptop/TV layouts stay console-free even when a controller is attached.
-  if (handheld) {
-    location.replace('./console.html');
-    return;
+  for(const [value,label] of config.champions){const option=document.createElement('option');option.value=value;option.textContent=label;champion.append(option)}
+  const saved=(()=>{try{return JSON.parse(localStorage.getItem('evil-wizard-launch-v2')||'{}')}catch(_){return {}}})();
+  if(saved.champion&&[...champion.options].some(o=>o.value===saved.champion))champion.value=saved.champion;
+  if(saved.mode&&[...modeSelect.options].some(o=>o.value===saved.mode))modeSelect.value=saved.mode;
+  if(saved.touchSize)touchSize.value=saved.touchSize;
+  if(saved.touchHand)touchHand.value=saved.touchHand;
+
+  function connectedGamepad(){try{return [...(navigator.getGamepads?.()||[])].find(p=>p&&p.connected)||null}catch(_){return null}}
+  function autoMode(){
+    if(phoneTablet)return 'touch';
+    if(knownHandheld||consoleUA)return 'gamepad';
+    if(connectedGamepad())return 'gamepad';
+    return 'keyboard';
   }
+  function resolvedMode(){return modeSelect.value==='auto'?autoMode():modeSelect.value}
+  function modeLabel(mode){
+    if(mode==='touch')return 'Phone / tablet · floating touch controls';
+    if(mode==='handheld')return 'Gaming handheld · physical controls';
+    if(mode==='gamepad')return 'Physical gamepad · no virtual controls';
+    return 'Keyboard + mouse · no virtual controls';
+  }
+  function updateDetected(){
+    const mode=resolvedMode();
+    detected.innerHTML='<strong>Detected play mode</strong><br>'+modeLabel(mode)+(connectedGamepad()?'<br>Controller: '+connectedGamepad().id.slice(0,58):'');
+    touchOptions.hidden=mode!=='touch';
+    document.querySelectorAll('[data-guide]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.guide===(mode==='touch'?'touch':mode==='keyboard'?'keyboard':/PlayStation/i.test(connectedGamepad()?.id||'')?'playstation':'xbox'))));
+    const selected=document.querySelector('[data-guide][aria-selected="true"]')||document.querySelector('[data-guide]');
+    if(selected)showGuide(selected.dataset.guide);
+  }
+  function showGuide(name){
+    const guide=document.getElementById('guide-text');
+    guide.textContent=config.guides?.[name]||'Controls guide unavailable.';
+    document.querySelectorAll('[data-guide]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.guide===name)));
+  }
+  document.querySelectorAll('[data-guide]').forEach(b=>b.addEventListener('click',()=>showGuide(b.dataset.guide)));
+  modeSelect.addEventListener('change',updateDetected);
+  window.addEventListener('gamepadconnected',updateDetected);
+  window.addEventListener('gamepaddisconnected',updateDetected);
+  updateDetected();
 
-  const frame = document.getElementById('game');
-  const enter = document.getElementById('enter');
-  let armed = false;
-
-  async function enterFullscreen() {
-    if (armed) return;
-    armed = true;
-    enter.hidden = true;
-    const root = document.documentElement;
-    try {
-      if (!document.fullscreenElement && root.requestFullscreen) {
-        await root.requestFullscreen({navigationUI:'hide'});
-      } else if (!document.webkitFullscreenElement && root.webkitRequestFullscreen) {
-        root.webkitRequestFullscreen();
-      }
-    } catch (_) {
-      // Browser policy may deny fullscreen; the game still occupies the full dynamic viewport.
+  let pendingHero='',bridgeReady=false,started=false;
+  function send(kind,extra={}){if(frame.contentWindow)frame.contentWindow.postMessage({channel:'evil-wizard-console/v1',kind,...extra},location.origin)}
+  window.addEventListener('message',event=>{
+    if(event.source!==frame.contentWindow||event.origin!==location.origin||!event.data)return;
+    if(event.data.type==='evil-wizard/hello'){send('init');return}
+    if(event.data.type==='evil-wizard/ready'){
+      bridgeReady=true;
+      if(pendingHero&&!started){started=true;send('start',{hero_class:pendingHero});status.textContent='Opening the last road…'}
+      return;
     }
-    try { frame.focus(); } catch (_) {}
+    if(event.data.type==='evil-wizard/state'&&event.data.playing===true){status.hidden=true;frame.focus()}
+  });
+
+  async function requestGameFullscreen(){
+    if(!fullscreen.checked)return;
+    try{
+      const root=document.documentElement;
+      if(!document.fullscreenElement&&root.requestFullscreen)await root.requestFullscreen({navigationUI:'hide'});
+      else if(!document.webkitFullscreenElement&&root.webkitRequestFullscreen)root.webkitRequestFullscreen();
+    }catch(_){}
   }
 
-  enter.addEventListener('pointerdown', event => {
-    event.preventDefault();
-    void enterFullscreen();
-  });
-  window.addEventListener('keydown', event => {
-    if (event.key === 'Escape') return;
-    event.preventDefault();
-    void enterFullscreen();
-  }, {capture:true});
-
-  // Gamepad-only desktop/TV play: a controller button can dismiss the launch
-  // curtain and focus the game even when browser fullscreen is unavailable.
-  let controllerArmed = false;
-  function pollGamepads() {
-    if (!armed && !controllerArmed) {
-      const pads = navigator.getGamepads?.() || [];
-      const active = [...pads].some(pad => pad && pad.connected && pad.buttons.some(button => button.pressed));
-      if (active) {
-        controllerArmed = true;
-        enter.hidden = true;
-        try { frame.focus(); } catch (_) {}
-      }
+  document.getElementById('start').addEventListener('click',async()=>{
+    const mode=resolvedMode();
+    try{localStorage.setItem('evil-wizard-launch-v2',JSON.stringify({champion:champion.value,mode:modeSelect.value,touchSize:touchSize.value,touchHand:touchHand.value}))}catch(_){}
+    if(mode==='touch'){
+      const q=new URLSearchParams({hero:champion.value,size:touchSize.value,hand:touchHand.value});
+      location.href='./console.html?'+q.toString();
+      return;
     }
-    requestAnimationFrame(pollGamepads);
-  }
-  window.addEventListener('gamepadconnected', () => {
-    const small = enter.querySelector('small');
-    if (small) small.textContent = 'Controller detected. Press any controller button to begin, or click/tap for fullscreen.';
+    await requestGameFullscreen();
+    pendingHero=champion.value;
+    setup.hidden=true;
+    status.hidden=false;
+    status.textContent='Loading game…';
+    frame.src='./index.html';
+    frame.closest('#game-shell').setAttribute('aria-hidden','false');
   });
-  requestAnimationFrame(pollGamepads);
+
+  const forced=params.get('mode');
+  if(['touch','keyboard','gamepad','handheld'].includes(forced)){modeSelect.value=forced;updateDetected()}
 })();
 </script>
 </body>
