@@ -19,6 +19,11 @@ try {
   assert.equal(await page.locator('#joystick').isVisible(),true,'Joystick must be visible');
   assert.equal(await page.locator('#champion-choice option').count(),15,'All champions selectable without tiny game menu');
   assert.equal(await page.locator('#start-champion').isVisible(),true,'Mobile start button must be visible');
+  assert.equal(await page.locator('#show-controls').isVisible(),true,'Handheld setup must expose How to Play / Controls before starting');
+  await page.locator('#show-controls').click();
+  assert.equal(await page.locator('.console-options').getAttribute('open') !== null,true,'How to Play must open the controls dialog');
+  assert.match(await page.locator('.console-options').textContent(),/Xbox-compatible controller/,'Controls dialog must document large-screen controller play');
+  await page.locator('#console-options-close').click();
   assert.match(await page.locator('meta[name="viewport"]').getAttribute('content'),/maximum-scale=1/,'Mobile shell must lock browser page scale');
 
   const rails=await page.evaluate(()=>{
@@ -76,38 +81,39 @@ try {
   assert.equal(errors.length,0,`Mobile browser JS errors: ${errors.join('; ')}`);
   await mobileContext.close();
 
-  // Facebook's iOS in-app browser can remain portrait even when the phone is
-  // physically rotated. The game must remain usable instead of covering itself
-  // with a mandatory rotate screen.
-  const facebookContext = await browser.newContext({
+  // Portrait handhelds must stop at an orientation gate instead of exposing
+  // undersized gameplay controls. Rotating to landscape reveals the console.
+  const portraitContext = await browser.newContext({
     viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:1,
-    userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 [FBAN/FBIOS;FBAV/500.0.0.0]'
+    userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1'
   });
-  const facebook = await facebookContext.newPage();
-  const fbErrors=[];
-  facebook.on('pageerror',error=>fbErrors.push(String(error)));
-  await facebook.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
-  await facebook.waitForURL(/\/console\.html$/);
-  assert.equal(await facebook.locator('#game').isVisible(),true,'Portrait in-app browser must still show the game');
-  assert.equal(await facebook.locator('#joystick').isVisible(),true,'Portrait in-app browser must keep movement controls visible');
-  assert.equal(await facebook.locator('button[data-action="attack"]').isVisible(),true,'Portrait in-app browser must keep attack visible');
-  const portrait=await facebook.evaluate(()=>{
-    const attack=document.querySelector('button[data-action="attack"]').getBoundingClientRect();
-    const center=document.elementFromPoint(attack.left+attack.width/2,attack.top+attack.height/2);
-    return {
-      width:document.documentElement.scrollWidth,
-      height:document.documentElement.scrollHeight,
-      iw:innerWidth,ih:innerHeight,
-      attackReachable:Boolean(center&&center.closest('button[data-action="attack"]')),
-      rotatePointer:getComputedStyle(document.querySelector('.rotate')).pointerEvents
-    };
+  const portraitPage = await portraitContext.newPage();
+  const portraitErrors=[];
+  portraitPage.on('pageerror',error=>portraitErrors.push(String(error)));
+  await portraitPage.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
+  await portraitPage.waitForURL(/\/console\.html$/);
+  assert.equal(await portraitPage.locator('.orientation-gate').isVisible(),true,'Portrait handheld must ask the player to rotate sideways');
+  assert.match(await portraitPage.locator('.orientation-gate').textContent(),/Turn your device sideways/,'Orientation gate must clearly explain landscape play');
+  assert.equal(await portraitPage.locator('.console').isVisible(),false,'Handheld console must stay hidden in portrait');
+  await portraitPage.setViewportSize({width:852,height:393});
+  await portraitPage.waitForFunction(()=>getComputedStyle(document.querySelector('.orientation-gate')).display==='none');
+  assert.equal(await portraitPage.locator('#joystick').isVisible(),true,'Rotating to landscape must reveal movement controls');
+  assert.equal(await portraitPage.locator('button[data-action="attack"]').isVisible(),true,'Rotating to landscape must reveal action controls');
+  assert.equal(portraitErrors.length,0,`Portrait browser JS errors: ${portraitErrors.join('; ')}`);
+  await portraitContext.close();
+
+  // A large touch-capable PC must stay in desktop mode; touch alone must not
+  // create the handheld console on a laptop/large display.
+  const largeTouchContext = await browser.newContext({
+    viewport:{width:1920,height:1080},hasTouch:true,deviceScaleFactor:1,
+    userAgent:'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36'
   });
-  assert.equal(portrait.width,portrait.iw,'Portrait console must not overflow horizontally');
-  assert.equal(portrait.height,portrait.ih,'Portrait console must fit the in-app browser viewport');
-  assert.equal(portrait.attackReachable,true,'Portrait attack control must not be covered by rotate messaging');
-  assert.equal(portrait.rotatePointer,'none','Landscape recommendation must never block controls');
-  assert.equal(fbErrors.length,0,`Facebook-style browser JS errors: ${fbErrors.join('; ')}`);
-  await facebookContext.close();
+  const largeTouchPage = await largeTouchContext.newPage();
+  await largeTouchPage.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
+  assert.match(largeTouchPage.url(),/\/play\.html$/,'Large touch PC must remain on desktop launcher');
+  assert.equal(await largeTouchPage.locator('#desktop-shell').isVisible(),true,'Large touch PC must use desktop game layout');
+  assert.equal(await largeTouchPage.locator('.console').count(),0,'Large touch PC must never generate handheld console');
+  await largeTouchContext.close();
 
   const desktopContext = await browser.newContext({viewport:{width:1365,height:768},hasTouch:false,deviceScaleFactor:1});
   const desktop = await desktopContext.newPage();
@@ -132,7 +138,7 @@ try {
   assert.equal(desktopErrors.length,0,`Desktop browser JS errors: ${desktopErrors.join('; ')}`);
   await desktopContext.close();
 
-  console.log('Browser passed: landscape mobile, portrait Facebook-style webview, no gameplay zoom, guided opening, desktop keyboard launch, and borderless viewport.');
+  console.log('Browser passed: handheld landscape console, portrait rotate gate, pre-game controls help, large-touch desktop split, keyboard/mouse desktop launch, and borderless viewport.');
 } finally {
   await browser.close();
 }
