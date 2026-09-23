@@ -17,6 +17,7 @@ func _run() -> void:
     _check(_has_key("move_down",KEY_S) or _has_key("move_down",KEY_Q),"keyboard crouch is mapped")
     _check(_has_key("jump",KEY_W) or _has_key("jump",KEY_E),"keyboard W/E jumps")
     _check(_has_key("attack",KEY_SPACE) and _has_mouse("attack",MOUSE_BUTTON_LEFT),"Space and left mouse attack")
+    _check(_has_mouse("heavy_attack",MOUSE_BUTTON_RIGHT),"right mouse performs heavy attack")
     _check(_has_key("interact",KEY_F),"keyboard F interacts")
     _check(_has_key("ultimate",KEY_U),"keyboard U uses ultimate")
 
