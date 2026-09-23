@@ -6,7 +6,9 @@
   const frame = document.getElementById('game');
   const consoleShell = document.querySelector('.console');
   const rightHead = document.querySelector('.right-head');
-  if (!rail || !frame || !consoleShell || !rightHead) return;
+  const status = document.getElementById('status');
+  const interactButton = document.querySelector('button[data-action="interact"]');
+  if (!rail || !frame || !consoleShell || !rightHead || !status || !interactButton) return;
 
   const champions = [
     ['warrior','Warrior'],['mage','Mage'],['rogue','Rogue'],['paladin','Paladin'],
@@ -49,6 +51,9 @@
     .console-options .key-guide{border-top:1px solid #556173;margin-top:14px;padding-top:10px}
     .console-options .key-guide strong{color:#f5d399}
     .console-options button:focus-visible,.console-options select:focus-visible{outline:3px solid #f5d399;outline-offset:2px}
+    .status.tutorial{display:block;background:#17120be8;color:#ffe0a3;border:1px solid #d5a85b;font-weight:800}
+    .round.tutorial-pulse{border-color:#ffd578;box-shadow:0 0 0 3px #ffca6440,0 0 18px #ffc65caa,inset 0 0 0 2px #222a35;animation:evilWizardTutorialPulse .9s ease-in-out infinite alternate}
+    @keyframes evilWizardTutorialPulse{from{transform:scale(1)}to{transform:scale(1.09)}}
     @media(max-height:430px){.champion-picker{gap:3px}.champion-picker select,.champion-picker button{min-height:27px;padding:2px;font-size:10px}.champion-picker label{font-size:9px}}
     @media(max-height:350px){.rail .hint{display:none}.console .rail{gap:3px;padding:4px}.console .joy{width:calc(clamp(70px,21vh,96px)*var(--control-factor));height:calc(clamp(70px,21vh,96px)*var(--control-factor))}}
     @media(prefers-reduced-motion:reduce){.console .screen iframe{transition:none}}
@@ -75,10 +80,37 @@
   start.setAttribute('aria-label','Start game with selected champion');
   start.addEventListener('click', () => {
     frame.contentWindow?.postMessage({channel:'evil-wizard-console/v1',kind:'start',hero_class:select.value},location.origin);
+    status.textContent = 'Opening story — tap INTERACT to continue';
+    status.classList.remove('ready');
+    status.classList.add('tutorial');
+    interactButton.classList.add('tutorial-pulse');
+    start.disabled = true;
     frame.focus();
   });
   picker.append(label,select,start);
   rail.appendChild(picker);
+
+  // The Godot bridge reports when the opening cinematic has handed control
+  // to the player, so the shell can teach the next action instead of guessing.
+  window.addEventListener('message', event => {
+    if (event.source !== frame.contentWindow || event.origin !== location.origin || !event.data) return;
+    if (event.data.type !== 'evil-wizard/state') return;
+    if (event.data.playing === true) {
+      interactButton.classList.remove('tutorial-pulse');
+      status.textContent = 'Move with the joystick · ATTACK enemies · JUMP onto platforms';
+      status.classList.remove('ready');
+      status.classList.add('tutorial');
+      window.setTimeout(() => {
+        status.classList.remove('tutorial');
+        status.classList.add('ready');
+      }, 5500);
+    } else if (start.disabled) {
+      status.textContent = 'Opening story — tap INTERACT to continue';
+      status.classList.remove('ready');
+      status.classList.add('tutorial');
+      interactButton.classList.add('tutorial-pulse');
+    }
+  });
 
   // Presentation controls change only the handheld shell, not the simulation.
   const defaults = {size:'standard',visibility:'normal',hand:'right'};
@@ -112,7 +144,7 @@
     <label for="console-size">Control size <select id="console-size"><option value="compact">Compact</option><option value="standard">Standard</option><option value="large">Large</option></select></label>
     <label for="console-hand">Control position <select id="console-hand"><option value="right">Joystick left</option><option value="left">Joystick right</option></select></label>
     <label for="console-visibility">Game visibility <select id="console-visibility"><option value="normal">Original</option><option value="clarity">Clearer</option><option value="bright">Brighter</option></select></label>
-    <div class="key-guide"><strong>Desktop Web &amp; keyboard</strong><p>A / D or ← / → move · S / Q crouch · W / E jump · Space / J / left click attack · K heavy · Shift dash · F interact · L / I abilities · U ultimate · Esc pause.</p><strong>Handheld</strong><p>Drag the stick and hold action buttons together. Tap ↑ to jump; ↓ to crouch. Rotate to landscape for the full console.</p></div>
+    <div class="key-guide"><strong>Desktop Web &amp; keyboard</strong><p>A / D or ← / → move · S / Q crouch · W / E jump · Space / J / left click attack · K heavy · Shift dash · F interact · L / I abilities · U ultimate · Esc pause.</p><strong>Handheld</strong><p>Drag the stick and hold action buttons together. Tap ↑ to jump; ↓ to crouch. Landscape is recommended, but portrait remains playable in browsers that lock orientation.</p></div>
   `;
   document.body.appendChild(dialog);
   for (const name of Object.keys(defaults)) {
