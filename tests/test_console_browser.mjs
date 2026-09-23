@@ -50,7 +50,7 @@ try {
   const prologueImage=await page.locator('#game').screenshot();
   assert(!titleImage.equals(prologueImage),'Starting champion must show opening prologue');
   for(let beat=0;beat<3;beat++){
-    await page.locator('button[data-action="interact"]').click();
+    await page.locator('button[data-action="interact"]').click({force:true});
     await page.waitForTimeout(220);
   }
   const gameImage=await page.locator('#game').screenshot();
