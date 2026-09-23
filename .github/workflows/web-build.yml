@@ -18,6 +18,9 @@ jobs:
       - name: Check out game
         uses: actions/checkout@v4
 
+      - name: Validate OSU deployment tool
+        run: python3 -m py_compile tools/deploy_controls_osu.py
+
       - name: Verify handheld console markup and JavaScript
         shell: bash
         run: |
