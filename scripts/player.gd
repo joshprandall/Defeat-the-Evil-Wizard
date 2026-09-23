@@ -2030,14 +2030,52 @@ func _spawn_spell_burst(at: Vector2, radius: float, color: Color) -> void:
     var burst: SpellBurst = SpellBurst.new().setup(at, radius, color)
     get_parent().add_child(burst)
 
+func _melee_direction(reach: float, height: float) -> Vector2:
+    # Close-contact assist: mobile players should not whiff just because a
+    # crawler crossed a few pixels behind the hero between taps. Prefer the
+    # nearest unobstructed enemy at roughly the same elevation; otherwise keep
+    # the hero's existing facing direction.
+    var search: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+    var circle: CircleShape2D = CircleShape2D.new()
+    circle.radius = reach + 38.0
+    search.shape = circle
+    search.transform = Transform2D(0.0, global_position + Vector2(0,-28))
+    search.collision_mask = 2
+    search.exclude = [get_rid()]
+    var candidates: Array[Dictionary] = get_world_2d().direct_space_state.intersect_shape(search,24)
+    var best_direction: Vector2 = Vector2(facing,0.0)
+    var best_distance: float = INF
+    for result: Dictionary in candidates:
+        var target = result.get("collider")
+        if target == null or not target.has_method("take_damage"):
+            continue
+        var offset: Vector2 = target.global_position - global_position
+        if absf(offset.y) > maxf(54.0,height + 18.0):
+            continue
+        if absf(offset.x) > reach + 38.0:
+            continue
+        var from: Vector2 = global_position + Vector2(0,-28)
+        var to: Vector2 = target.global_position + Vector2(0,-28)
+        var ray: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(from,to,4,[get_rid()])
+        if not get_world_2d().direct_space_state.intersect_ray(ray).is_empty():
+            continue
+        var distance: float = offset.length_squared()
+        if distance < best_distance:
+            best_distance = distance
+            if absf(offset.x) > 3.0:
+                best_direction = Vector2(signf(offset.x),0.0)
+    return best_direction
+
 func _strike(damage: float, reach: float, height: float, knockback: float, stun: float = 0.0) -> void:
     var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
     var rect: RectangleShape2D = RectangleShape2D.new()
     rect.size = Vector2(reach,height)
-    # Melee follows the hero's facing direction so keyboard and handheld
-    # attacks are deterministic even when there is no mouse/right-stick aim.
-    var direction: Vector2 = Vector2(facing,0.0)
-    var center: Vector2 = global_position+Vector2(0,-30)+direction*(reach*0.5+18.0)
+    var direction: Vector2 = _melee_direction(reach,height)
+    if absf(direction.x) > 0.5:
+        facing = direction.x
+    # Cover the space from the hero's body outward instead of leaving an
+    # 18-pixel dead zone at point-blank range.
+    var center: Vector2 = global_position+Vector2(0,-30)+direction*(reach*0.5+4.0)
     rect.size = Vector2(reach,height)
     query.shape = rect
     query.transform = Transform2D(direction.angle(),center)
