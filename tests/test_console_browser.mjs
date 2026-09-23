@@ -141,6 +141,7 @@ try {
   await desktop.goto('http://127.0.0.1:8765/play.html?mode=keyboard',{waitUntil:'domcontentloaded'});
   assert.equal(await desktop.locator('#menu').isVisible(),true,'Desktop must begin at main menu');
   await desktop.locator('[data-screen="controls"]').click();
+  await desktop.locator('[data-control-pane="keyboard"]').click();
   const jumpRow=desktop.locator('#keyboard-map .mapping-row').filter({hasText:'Jump'}).locator('select');
   await jumpRow.selectOption('74');
   await desktop.locator('[data-screen="settings"]').click();
