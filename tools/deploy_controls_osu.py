@@ -8,6 +8,7 @@ Scope:
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import shutil
 import tempfile
@@ -112,6 +113,12 @@ def verify_text(files: dict[str, bytes]) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--commit", required=True, help="Exact verified Evil Wizard game commit")
+    args = parser.parse_args()
+    if args.commit != BUILD_COMMIT:
+        fail(f"--commit must be the verified build {BUILD_COMMIT}")
+
     home = Path.home()
     live = home / "public_html" / "games" / "evil-wizard"
     games = live.parent
