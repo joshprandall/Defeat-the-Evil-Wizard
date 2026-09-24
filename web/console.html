@@ -52,7 +52,7 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
 </head>
 <body>
 <main class="touch-stage" id="touch-stage" data-evil-wizard-console data-size="compact" data-hand="right" data-style="xbox">
-  <iframe id="game" title="Defeat the Evil Wizard game" src="./index.html?build=20260924-xplat1" allow="gamepad; fullscreen" allowfullscreen tabindex="0"></iframe>
+  <iframe id="game" title="Defeat the Evil Wizard game" src="./index.html?build=20260924-stickfix1" allow="gamepad; fullscreen" allowfullscreen tabindex="0"></iframe>
   <div id="status" role="status" aria-live="polite">Loading game…</div>
   <div class="controls" aria-label="Floating controller">
     <section class="top-left" aria-label="Left shoulder controls">
@@ -78,7 +78,7 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
   </div>
 </main>
 <div class="orientation-gate" role="status" aria-live="polite"><div class="orientation-card"><span class="orientation-icon" aria-hidden="true">↻</span><h1>Turn your screen sideways</h1><p>Phone and tablet play uses landscape so the game stays visible behind the floating controls. Rotate your device to continue. <strong>Your saved control layout will load automatically.</strong></p></div></div>
-<script src="./console-champions.js?v=20260924-xplat1"></script>
+<script src="./console-champions.js?v=20260924-stickfix1"></script>
 <script>
 'use strict';
 (() => {
@@ -86,7 +86,7 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
   let saved={};try{saved=JSON.parse(localStorage.getItem('evil-wizard-launch-v3')||'{}')}catch(_){}
   const clone=o=>JSON.parse(JSON.stringify(o)),merge=(base,src)=>{const out=clone(base);const walk=(t,s)=>{if(!s||typeof s!=='object')return;for(const[k,v]of Object.entries(s)){if(v&&typeof v==='object'&&!Array.isArray(v)&&t[k]&&typeof t[k]==='object')walk(t[k],v);else if(k in t)t[k]=v}};walk(out,src);return out};
   const state=merge(cfg.defaults,saved);
-  const BUILD='20260924-xplat1';
+  const BUILD='20260924-stickfix1';
   const params=new URLSearchParams(location.search),hero=params.get('hero')||state.champion||'warrior';
   const ua=navigator.userAgent||'';
   const embeddedWebView=/(FBAN|FBAV|FB_IAB|MessengerForiOS|Instagram|Line\/|MicroMessenger|; wv\)|\bwv\b|WebView)/i.test(ua);
@@ -116,8 +116,84 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
   function press(pointer,action){const key=`${pointer}:${action}`;if(held.has(key))return;held.set(key,action);send('button',{action,pressed:true,pointer:key})}
   function release(pointer,action){const key=`${pointer}:${action}`;if(!held.delete(key))return;send('button',{action,pressed:false,pointer:key})}
   function clearAll(){for(const[key,action]of held)send('button',{action,pressed:false,pointer:key});held.clear();knob.style.transform='';joystick.classList.remove('active');joystickPointer=null;document.querySelectorAll('.pressed').forEach(b=>b.classList.remove('pressed'));send('reset')}
-  function centerStick(e){const r=joystick.getBoundingClientRect(),x=(e.clientX-r.left-r.width/2)/(r.width*.34),y=(e.clientY-r.top-r.height/2)/(r.height*.34),len=Math.max(1,Math.hypot(x,y)),dx=x/len,dy=y/len;knob.style.transform=`translate(${dx*62}%,${dy*62}%)`;const pointer=`stick-${e.pointerId}`,active=new Set();if(dx<-.25)active.add('move_left');if(dx>.25)active.add('move_right');if(dy>.5)active.add('move_down');for(const a of['move_left','move_right','move_down'])active.has(a)?press(pointer,a):release(pointer,a)}
-  joystick.addEventListener('pointerdown',e=>{if(joystickPointer!==null)return;e.preventDefault();joystickPointer=e.pointerId;joystick.classList.add('active');joystick.setPointerCapture(e.pointerId);centerStick(e)});joystick.addEventListener('pointermove',e=>{if(e.pointerId===joystickPointer){e.preventDefault();centerStick(e)}});function stopStick(e){if(e.pointerId!==joystickPointer)return;const p=`stick-${e.pointerId}`;for(const a of['move_left','move_right','move_down'])release(p,a);joystickPointer=null;knob.style.transform='';joystick.classList.remove('active')}['pointerup','pointercancel','lostpointercapture'].forEach(t=>joystick.addEventListener(t,stopStick));
+  const touchCapable=(navigator.maxTouchPoints||0)>0||('ontouchstart' in window);
+  function updateStick(clientX,clientY,id){
+    const r=joystick.getBoundingClientRect();
+    const x=(clientX-r.left-r.width/2)/(r.width*.34),y=(clientY-r.top-r.height/2)/(r.height*.34);
+    const len=Math.max(1,Math.hypot(x,y)),dx=x/len,dy=y/len;
+    knob.style.transform=`translate(${dx*62}%,${dy*62}%)`;
+    const pointer=`stick-${id}`,active=new Set();
+    if(dx<-.25)active.add('move_left');
+    if(dx>.25)active.add('move_right');
+    if(dy>.5)active.add('move_down');
+    for(const a of['move_left','move_right','move_down'])active.has(a)?press(pointer,a):release(pointer,a);
+  }
+  function startStick(id,clientX,clientY){
+    if(joystickPointer!==null)return false;
+    joystickPointer=id;
+    joystick.classList.add('active');
+    updateStick(clientX,clientY,id);
+    return true;
+  }
+  function stopStick(id){
+    if(id!==joystickPointer)return;
+    const p=`stick-${id}`;
+    for(const a of['move_left','move_right','move_down'])release(p,a);
+    joystickPointer=null;
+    knob.style.transform='';
+    joystick.classList.remove('active');
+  }
+
+  // Touch Events are the primary path on phones/tablets. They remain reliable in
+  // iOS Safari and embedded WebViews even when Pointer Capture is unavailable.
+  joystick.addEventListener('touchstart',e=>{
+    if(!e.changedTouches?.length)return;
+    const t=e.changedTouches[0];
+    if(startStick(`t${t.identifier}`,t.clientX,t.clientY))e.preventDefault();
+  },{passive:false});
+  joystick.addEventListener('touchmove',e=>{
+    if(typeof joystickPointer!=='string'||!joystickPointer.startsWith('t'))return;
+    const id=Number(joystickPointer.slice(1));
+    const t=[...e.touches].find(x=>x.identifier===id);
+    if(!t)return;
+    e.preventDefault();
+    updateStick(t.clientX,t.clientY,joystickPointer);
+  },{passive:false});
+  const endTouch=e=>{
+    if(typeof joystickPointer!=='string'||!joystickPointer.startsWith('t'))return;
+    const id=Number(joystickPointer.slice(1));
+    if([...e.changedTouches].some(x=>x.identifier===id)){
+      e.preventDefault();
+      stopStick(joystickPointer);
+    }
+  };
+  joystick.addEventListener('touchend',endTouch,{passive:false});
+  joystick.addEventListener('touchcancel',endTouch,{passive:false});
+
+  // Pointer Events remain the mouse/pen fallback and the path for browsers
+  // without Touch Events. setPointerCapture is best-effort, never required.
+  joystick.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='touch'&&touchCapable)return;
+    const id=`p${e.pointerId}`;
+    if(!startStick(id,e.clientX,e.clientY))return;
+    e.preventDefault();
+    try{joystick.setPointerCapture?.(e.pointerId)}catch(_){}
+  });
+  joystick.addEventListener('pointermove',e=>{
+    const id=`p${e.pointerId}`;
+    if(id!==joystickPointer)return;
+    e.preventDefault();
+    updateStick(e.clientX,e.clientY,id);
+  });
+  const endPointer=e=>{
+    const id=`p${e.pointerId}`;
+    if(id!==joystickPointer)return;
+    e.preventDefault();
+    stopStick(id);
+  };
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>joystick.addEventListener(t,endPointer));
+  window.addEventListener('pointerup',endPointer);
+  window.addEventListener('pointercancel',endPointer);
   for(const button of document.querySelectorAll('button[data-action]')){const action=button.dataset.action;button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture(e.pointerId);button.classList.add('pressed');press(`button-${e.pointerId}`,action);if(action==='pause')release(`button-${e.pointerId}`,action);if(state.fullscreen){try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})}catch(_){}}});const stop=e=>{release(`button-${e.pointerId}`,action);button.classList.remove('pressed')};['pointerup','pointercancel','lostpointercapture'].forEach(t=>button.addEventListener(t,stop));button.addEventListener('contextmenu',e=>e.preventDefault())}
   window.addEventListener('message',e=>{if(e.source!==game.contentWindow||e.origin!==location.origin||!e.data)return;if(e.data.type==='evil-wizard/hello'){game.contentWindow.postMessage({channel,kind:'init'},location.origin);return}if(e.data.type==='evil-wizard/ready'){armed=true;bridgeReady=true;status.textContent=landscape()?'Game ready — starting…':'Game ready — rotate sideways';maybeStart();return}if(e.data.type==='evil-wizard/state'&&e.data.playing===true){status.classList.add('ready');game.focus()}else if(e.data.type==='evil-wizard/state'&&started){status.textContent='Opening story — use INTERACT to continue';status.classList.remove('ready')}});
   const orient=()=>{clearAll();if(landscape()){status.classList.remove('ready');status.textContent=bridgeReady?'Game ready — starting…':'Loading game…';maybeStart()}};matchMedia('(orientation:landscape)').addEventListener?.('change',orient);window.addEventListener('orientationchange',orient);
