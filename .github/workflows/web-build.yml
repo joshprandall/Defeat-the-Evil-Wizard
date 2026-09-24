@@ -37,7 +37,7 @@ jobs:
                        'id="difficulty"', 'id="master-volume"', 'id="brightness"', 'id="camera-shake"',
                        'Reset controls to defaults', 'Reset settings to defaults'):
               assert item in launcher, f'Missing game-menu feature: {item}'
-          for item in ('data-evil-wizard-console', 'id="joystick"', 'id="game"', 'src="./index.html"',
+          for item in ('data-evil-wizard-console', 'id="joystick"', 'id="game"', 'src="./index.html?build=',
                        'orientation-gate', 'Turn your screen sideways', 'left-zone', 'right-zone',
                        'top-left', 'top-right', 'data-position="south"', 'data-position="north"',
                        'xbox-label', 'ps-label', 'embeddedWebView', 'ew_launch'):
