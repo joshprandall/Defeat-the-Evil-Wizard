@@ -131,8 +131,12 @@ func _physics_process(delta: float) -> void:
     _enforce_arena()
     queue_redraw()
 
+func _at_or_below_health_ratio(ratio: float) -> bool:
+    var threshold: float = MAX_HEALTH*ratio
+    return health<threshold or is_equal_approx(health,threshold)
+
 func _check_phase() -> void:
-    if phase==1 and health<=MAX_HEALTH*0.70:
+    if phase==1 and _at_or_below_health_ratio(0.70):
         phase=2
         barrier_time=1.5
         action_timer=0.55
@@ -144,7 +148,7 @@ func _check_phase() -> void:
             seal_called=true
             seal_remaining=3
             seal_requested.emit(3)
-    elif phase==2 and health<=MAX_HEALTH*0.38 and seal_remaining<=0:
+    elif phase==2 and _at_or_below_health_ratio(0.38) and seal_remaining<=0:
         phase=3
         barrier_time=1.2
         action_timer=0.35
@@ -153,7 +157,7 @@ func _check_phase() -> void:
         request_flash.emit(global_position+Vector2(0,-48),Color("#c76fe1"))
         damage_text_requested.emit(global_position+Vector2(0,-130),"THE ROADS RETURN",Color("#e7aaf2"))
         sfx_requested.emit("final_phase",-1.0,0.82)
-    elif phase==3 and health<=MAX_HEALTH*0.14:
+    elif phase==3 and _at_or_below_health_ratio(0.14):
         phase=4
         barrier_time=0.8
         action_timer=0.18

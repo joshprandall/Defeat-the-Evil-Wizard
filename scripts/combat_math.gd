@@ -114,11 +114,12 @@ static func ascension_resource_floor(maximum: float) -> float:
 static func true_wizard_phase(current: float, maximum: float, seal_remaining: int = 0) -> int:
     if maximum<=0.0:
         return 1
-    if current<=maximum*0.14:
+    var ratio: float = clampf(current/maximum,0.0,1.0)
+    if ratio<0.14 or is_equal_approx(ratio,0.14):
         return 4
-    if current<=maximum*0.38 and seal_remaining<=0:
+    if (ratio<0.38 or is_equal_approx(ratio,0.38)) and seal_remaining<=0:
         return 3
-    if current<=maximum*0.70:
+    if ratio<0.70 or is_equal_approx(ratio,0.70):
         return 2
     return 1
 

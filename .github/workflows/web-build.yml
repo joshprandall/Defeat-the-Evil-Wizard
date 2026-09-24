@@ -116,10 +116,7 @@ jobs:
           set -euo pipefail
           "$GODOT_BIN" --headless --path . --script res://tests/test_input_modes.gd
 
-      # Existing combat suite has an unrelated True Wizard Crown Seal threshold
-      # expectation mismatch; report it without blocking touch/Web packaging.
-      - name: Report existing combat suite (known baseline mismatch)
-        continue-on-error: true
+      - name: Test combat math and boss phase boundaries
         run: |
           set -euo pipefail
           "$GODOT_BIN" --headless --path . --script res://tests/test_runner.gd
