@@ -40,7 +40,7 @@ jobs:
           for item in ('data-evil-wizard-console', 'id="joystick"', 'id="game"', 'src="./index.html"',
                        'orientation-gate', 'Turn your screen sideways', 'left-zone', 'right-zone',
                        'top-left', 'top-right', 'data-position="south"', 'data-position="north"',
-                       'xbox-label', 'ps-label'):
+                       'xbox-label', 'ps-label', 'embeddedWebView', 'ew_launch'):
               assert item in touch, f'Missing floating-controller feature: {item}'
           assert 'class="dpad"' not in touch, 'Virtual D-pad must not return on phone/tablet controls'
           assert '--control:62px' in touch and '--joy:128px' in touch, 'Large default touch control sizing is missing'
@@ -132,7 +132,8 @@ jobs:
           cp web/console.html build/web/console.html
           cp web/play.html build/web/play.html
           cp web/console-champions.js build/web/console-champions.js
-          for file in index.html index.js index.wasm index.pck play.html console.html console-champions.js; do
+          cp web/.htaccess build/web/.htaccess
+          for file in index.html index.js index.wasm index.pck play.html console.html console-champions.js .htaccess; do
             test -s "build/web/$file" || { echo "Missing or empty: build/web/$file"; exit 1; }
           done
 
@@ -143,6 +144,7 @@ jobs:
           path: build/web/
           if-no-files-found: error
           retention-days: 14
+          include-hidden-files: true
 
       - name: Install Chromium browser test tools
         run: |

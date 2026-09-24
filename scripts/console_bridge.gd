@@ -41,6 +41,47 @@ func _ready() -> void:
             }
         })();
     """)
+    _bootstrap_direct_web_launch()
+
+func _bootstrap_direct_web_launch() -> void:
+    if not OS.has_feature("web"):
+        return
+    var raw: Variant = JavaScriptBridge.eval("""
+        (function () {
+            const p = new URLSearchParams(window.location.search);
+            if (p.get('ew_launch') !== '1') return '';
+            const volume = Number(p.get('master_volume') || '85');
+            const brightness = Number(p.get('brightness') || '100');
+            return JSON.stringify({
+                hero: p.get('hero') || 'warrior',
+                difficulty: p.get('difficulty') || 'adventurer',
+                camera_shake: p.get('camera_shake') !== '0',
+                master_volume: Number.isFinite(volume) ? volume : 85,
+                brightness: Number.isFinite(brightness) ? brightness : 100
+            });
+        })();
+    """, true)
+    if str(raw).is_empty():
+        return
+    var payload: Variant = JSON.parse_string(str(raw))
+    if typeof(payload) != TYPE_DICTIONARY:
+        return
+    call_deferred("_apply_direct_web_launch", payload)
+
+func _apply_direct_web_launch(payload: Dictionary) -> void:
+    # Top-level compatibility mode intentionally keeps the native Godot touch controls enabled.
+    # This avoids depending on fullscreen, orientation-lock, or a nested iframe in social WebViews.
+    for _attempt: int in range(90):
+        var scene: Node = get_tree().current_scene
+        if scene != null and scene.name == "Game":
+            var game_hud: GameHUD = scene.get("hud") as GameHUD
+            if game_hud != null and game_hud.title_overlay.visible:
+                break
+        await get_tree().process_frame
+    _apply_settings(payload)
+    var brightness: float = clampf(float(payload.get("brightness", 100.0)), 75.0, 135.0) / 100.0
+    JavaScriptBridge.eval("(function(){var c=document.querySelector('canvas');if(c)c.style.filter='brightness(%s)';})();" % str(brightness))
+    _start_champion(str(payload.get("hero", "warrior")))
 
 func _process(_delta: float) -> void:
     if not _console_active or not OS.has_feature("web"):

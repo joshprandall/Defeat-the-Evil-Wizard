@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#05070b">
 <title>Defeat the Evil Wizard | Touch Play</title>
@@ -49,7 +52,7 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
 </head>
 <body>
 <main class="touch-stage" id="touch-stage" data-evil-wizard-console data-size="compact" data-hand="right" data-style="xbox">
-  <iframe id="game" title="Defeat the Evil Wizard game" src="./index.html" allow="gamepad; fullscreen" allowfullscreen tabindex="0"></iframe>
+  <iframe id="game" title="Defeat the Evil Wizard game" src="./index.html?build=20260924-xplat1" allow="gamepad; fullscreen" allowfullscreen tabindex="0"></iframe>
   <div id="status" role="status" aria-live="polite">Loading game…</div>
   <div class="controls" aria-label="Floating controller">
     <section class="top-left" aria-label="Left shoulder controls">
@@ -75,7 +78,7 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
   </div>
 </main>
 <div class="orientation-gate" role="status" aria-live="polite"><div class="orientation-card"><span class="orientation-icon" aria-hidden="true">↻</span><h1>Turn your screen sideways</h1><p>Phone and tablet play uses landscape so the game stays visible behind the floating controls. Rotate your device to continue. <strong>Your saved control layout will load automatically.</strong></p></div></div>
-<script src="./console-champions.js"></script>
+<script src="./console-champions.js?v=20260924-xplat1"></script>
 <script>
 'use strict';
 (() => {
@@ -83,7 +86,18 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
   let saved={};try{saved=JSON.parse(localStorage.getItem('evil-wizard-launch-v3')||'{}')}catch(_){}
   const clone=o=>JSON.parse(JSON.stringify(o)),merge=(base,src)=>{const out=clone(base);const walk=(t,s)=>{if(!s||typeof s!=='object')return;for(const[k,v]of Object.entries(s)){if(v&&typeof v==='object'&&!Array.isArray(v)&&t[k]&&typeof t[k]==='object')walk(t[k],v);else if(k in t)t[k]=v}};walk(out,src);return out};
   const state=merge(cfg.defaults,saved);
+  const BUILD='20260924-xplat1';
   const params=new URLSearchParams(location.search),hero=params.get('hero')||state.champion||'warrior';
+  const ua=navigator.userAgent||'';
+  const embeddedWebView=/(FBAN|FBAV|FB_IAB|MessengerForiOS|Instagram|Line\/|MicroMessenger|; wv\)|\bwv\b|WebView)/i.test(ua);
+  if(embeddedWebView||params.get('compat')==='1'){
+    const q=new URLSearchParams({
+      ew_launch:'1',hero,difficulty:state.difficulty,camera_shake:state.cameraShake?'1':'0',
+      master_volume:String(state.masterVolume),brightness:String(state.brightness),build:BUILD
+    });
+    location.replace('./index.html?'+q.toString());
+    return;
+  }
   const stage=document.getElementById('touch-stage'),game=document.getElementById('game'),joystick=document.getElementById('joystick'),knob=document.getElementById('knob'),status=document.getElementById('status');
   stage.dataset.size=state.touch.size;stage.dataset.hand=state.touch.hand;stage.dataset.style=state.touch.style;stage.style.setProperty('--alpha',String(Math.max(.4,Math.min(.9,state.touch.opacity/100))));game.style.filter='brightness('+(state.brightness/100)+')';
 

@@ -15,3 +15,17 @@ The buttons feed the existing Godot Input Map actions. Mouse-from-touch emulatio
 GitHub Actions runs the `Godot Web build` workflow on pushes and pull requests. It downloads and verifies the official Godot 4.7.2 Linux binary and export templates, imports the project, exports a non-threaded Web build, checks its `.html`, `.js`, `.wasm`, and `.pck` files, and uploads a downloadable `evil-wizard-web-<commit>` artifact retained for 14 days.
 
 Open this repository's **Actions → Godot Web build → latest run → Artifacts** to download the browser build after the run succeeds. A build artifact is **not** a deployment. Nothing in this workflow changes the OSU-hosted portfolio, learning platform, or existing live game; deploying an approved build to OSU is a separate step.
+
+
+## Embedded and in-app browsers
+
+The launcher now has a compatibility path for Facebook Messenger, Facebook, Instagram, Android WebViews, and similar embedded browsers. These environments can restrict fullscreen, orientation-lock APIs, or nested WebAssembly iframes even when the same game works in Safari/Chrome.
+
+- The normal setup menu still opens first.
+- On an embedded browser, Start launches the Godot Web build top-level instead of inside the external console iframe.
+- The selected champion, difficulty, camera shake, volume, and brightness are carried into the top-level launch.
+- The native Godot touch layer remains enabled, so phone/tablet play still has joystick/buttons and the portrait rotation prompt.
+- No external-browser handoff is required.
+- A 12-second framed-launch watchdog also falls back to the top-level path if a desktop/handheld browser stalls the iframe.
+
+The packaged OSU build includes an Apache `.htaccess` policy that prevents stale HTML and forces revalidation of JavaScript, WASM, and PCK assets. This is specifically intended to stop in-app browsers from resurfacing an older controller shell after a deployment.

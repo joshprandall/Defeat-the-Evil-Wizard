@@ -112,6 +112,29 @@ try {
   assert.equal(phoneErrors.length,0,`Phone browser errors: ${phoneErrors.join('; ')}`);
   await phoneContext.close();
 
+  // Facebook Messenger / Facebook in-app browser: launch the Godot canvas top-level.
+  // The game must not depend on fullscreen, orientation locking, or the external console shell here.
+  const messengerContext=await browser.newContext({
+    viewport:{width:844,height:390},isMobile:true,hasTouch:true,deviceScaleFactor:1,
+    userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 [FBAN/MessengerForiOS;FBAV/530.0.0.0.0]'
+  });
+  const messenger=await messengerContext.newPage();
+  const messengerErrors=[];messenger.on('pageerror',e=>messengerErrors.push(String(e)));
+  await messenger.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
+  assert.equal(await messenger.locator('#menu').isVisible(),true,'Messenger must still show the normal setup menu');
+  await messenger.locator('#champion').selectOption('warrior');
+  await Promise.all([
+    messenger.waitForURL(/\/index\.html\?.*ew_launch=1/,{timeout:15000}),
+    messenger.locator('#start').click()
+  ]);
+  assert.match(messenger.url(),/hero=warrior/,'Compatibility launch must carry the selected champion');
+  assert.equal(await messenger.locator('#touch-stage').count(),0,'Messenger must not use the external console shell');
+  await messenger.waitForSelector('canvas',{timeout:60000});
+  await messenger.waitForFunction(()=>typeof window.__evilWizardInput==='function',null,{timeout:60000});
+  assert.equal(await messenger.evaluate(()=>window.parent===window),true,'Messenger compatibility mode must run top-level');
+  assert.equal(messengerErrors.length,0,`Messenger browser errors: ${messengerErrors.join('; ')}`);
+  await messengerContext.close();
+
   const portraitContext=await browser.newContext({
     viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:1,
     userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1'
