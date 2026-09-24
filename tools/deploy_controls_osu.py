@@ -17,8 +17,8 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 from zipfile import ZipFile
 
-BUILD_COMMIT = "0292f7f1f35e487c18fce751fe8d71a5853c1f2c"
-ARTIFACT_ID = 10829465033
+BUILD_COMMIT = "550d578a4577144bc76d30862e8ff08773a78be5"
+ARTIFACT_ID = 10830964051
 ARCHIVE_URL = (
     "https://nightly.link/joshprandall/Defeat-the-Evil-Wizard/"
     f"actions/artifacts/{ARTIFACT_ID}.zip"
@@ -26,17 +26,17 @@ ARCHIVE_URL = (
 EXPECTED_SHA256 = {
     ".htaccess": "092929636313b35dfc5f1fae97a59aad91f7bec44971997a0a8e74921b1bed25",
     "console-champions.js": "b3fc5fba19f1ea579f5c3e59d9152cef38d8168ef0cc30d7d4ea8ba9b97d6138",
-    "console.html": "a0d458f865cbf1ec0d69ab89c0744c3ed5db15045bbf02c425e11d301233803b",
+    "console.html": "3267ca05361444d359b150e88dcad5db6605a988e91bba50d876712099a5f359",
     "index.apple-touch-icon.png": "01d4f63e525941e06ce74f5187dad030d20a8d52a07ce365ae4e94af97a3b1f5",
     "index.audio.position.worklet.js": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
     "index.audio.worklet.js": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
     "index.html": "9cc6e2fdddf17e095751162ed1c41e1927f84ceb456cd69b2613441962b59906",
     "index.icon.png": "ad3c35ad0facf487c618204bd98db543034fc95224eadc7f08c7a9ff38d5b3b5",
     "index.js": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba",
-    "index.pck": "973eb27fc2eb60c689a03e5c5205b53322081a3b06ad385f950e99230749a92f",
+    "index.pck": "ad3ca9d384f87565bc792945aa884dd20c6f2a84782257939f7a5fc756026588",
     "index.png": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
     "index.wasm": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0",
-    "play.html": "63d4775a9462313e4fbbdd47bc36a87ac6326aa976c86a17befe4f558144c558",
+    "play.html": "b59d7b932b4402c9ff17a6189355d5c7aa7ba5a4466684e3ace1d62c4bbbe5ed",
 }
 REQUIRED = {
     ".htaccess", "play.html", "console-champions.js", "console.html", "index.apple-touch-icon.png",
@@ -85,6 +85,11 @@ def verify_text(files: dict[str, bytes]) -> None:
         "xbox-label",
         "ps-label",
         'src="./index.html?build=',
+        "touchstart",
+        "touchmove",
+        "touchcancel",
+        "setPointerCapture?.",
+        "20260924-stickfix1",
     ):
         if marker not in touch:
             fail(f"Floating controller verification failed: missing {marker}")
