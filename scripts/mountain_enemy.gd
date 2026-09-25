@@ -25,17 +25,17 @@ func setup(kind: String, at: Vector2, hero: Hero) -> MountainEnemy:
     target = hero
     match enemy_type:
         "storm_shaman":
-            max_health = 86.0
+            max_health = 66.0
             move_speed = 78.0
             attack_damage = 17.0
             attack_range = 360.0
         "stone_raider":
-            max_health = 142.0
+            max_health = 96.0
             move_speed = 92.0
             attack_damage = 24.0
             attack_range = 82.0
         _:
-            max_health = 88.0
+            max_health = 68.0
             move_speed = 175.0
             attack_damage = 18.0
             attack_range = 62.0
