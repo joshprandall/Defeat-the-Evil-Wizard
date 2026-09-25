@@ -64,6 +64,11 @@ jobs:
           node --check /tmp/evil-wizard-touch.js
           node --check web/console-champions.js
 
+      - name: Test progression contract
+        run: |
+          set -euo pipefail
+          python3 tests/test_progression_contract.py
+
       - name: Install Godot 4.7.2 and single-threaded Web templates
         shell: bash
         run: |
