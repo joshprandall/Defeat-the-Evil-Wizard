@@ -142,11 +142,24 @@ func _execute_attack() -> void:
     if enemy_type == "briarling":
         velocity.x = facing*345.0
 
-    if absf(dx) <= attack_range+24.0 and absf(dy) < 110.0:
+    if _can_melee_target(24.0):
         var knockback: float = 510.0 if enemy_type=="root_guard" else 370.0
         target.take_damage(attack_damage,signf(dx)*knockback,global_position)
         request_flash.emit(target.global_position+Vector2(0,-28),Color("#99d56e"))
     sfx_requested.emit("enemy_attack",-9.0,0.78 if enemy_type=="root_guard" else 1.12)
+
+func _can_melee_target(reach_bonus: float = 0.0) -> bool:
+    if not is_instance_valid(target):
+        return false
+    var dx: float = target.global_position.x-global_position.x
+    var dy: float = target.global_position.y-global_position.y
+    var max_vertical: float = 76.0 if enemy_type=="root_guard" else 60.0
+    if absf(dx) > attack_range+reach_bonus or absf(dy) > max_vertical:
+        return false
+    var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(
+        global_position+Vector2(0,-30),target.global_position+Vector2(0,-29),4,[get_rid()]
+    )
+    return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
 
 func take_damage(amount: float, knockback: float = 0.0, _source: Vector2 = Vector2.ZERO, stun: float = 0.0) -> void:
     if health <= 0.0:
