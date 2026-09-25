@@ -63,6 +63,7 @@ var gait_time: float = 0.0
 var last_damage_time: float = 99.0
 var dash_buffer: float = 0.0
 var attack_buffer: float = 0.0
+var console_attack_queue: int = 0
 var max_air_jumps: int = 0
 var air_jumps_remaining: int = 0
 var animation_state: String = "idle"
@@ -359,6 +360,46 @@ func configure_class(class_id: String) -> void:
     identity_changed.emit(display_name, resource_name, resource_color, resource_help)
     queue_redraw()
 
+func queue_console_attack() -> void:
+    # Mobile WebViews can deliver pointer-down and pointer-up between two Godot
+    # physics frames. Keep up to a full three-hit combo queued so every deliberate
+    # ATTACK tap survives that browser timing and rapid taps feel responsive.
+    if controls_locked or health <= 0.0:
+        return
+    console_attack_queue = mini(console_attack_queue + 1, 3)
+
+func _perform_light_attack() -> void:
+    if hero_class == "mage":
+        _mage_light_attack()
+    elif hero_class == "rogue":
+        _rogue_light_attack()
+    elif hero_class == "paladin":
+        _paladin_light_attack()
+    elif hero_class == "archer":
+        _archer_light_attack()
+    elif hero_class == "barbarian":
+        _barbarian_light_attack()
+    elif hero_class == "fighter":
+        _fighter_light_attack()
+    elif hero_class == "monk":
+        _monk_light_attack()
+    elif hero_class == "ranger":
+        _ranger_light_attack()
+    elif hero_class == "cleric":
+        _cleric_light_attack()
+    elif hero_class == "bard":
+        _bard_light_attack()
+    elif hero_class == "druid":
+        _druid_light_attack()
+    elif hero_class == "sorcerer":
+        _sorcerer_light_attack()
+    elif hero_class == "warlock":
+        _warlock_light_attack()
+    elif hero_class == "wizard":
+        _wizard_light_attack()
+    else:
+        _warrior_light_attack()
+
 func _physics_process(delta: float) -> void:
     was_on_floor = is_on_floor()
     gait_time += delta * (7.0 + absf(velocity.x) * 0.025)
@@ -558,38 +599,13 @@ func _physics_process(delta: float) -> void:
         var decel: float = friction if is_on_floor() else friction * 0.24
         velocity.x = move_toward(velocity.x, 0.0, decel * delta)
 
-    if attack_buffer > 0.0 and attack_lock <= 0.0:
+    if console_attack_queue > 0 and attack_lock <= 0.0:
+        console_attack_queue -= 1
         attack_buffer = 0.0
-        if hero_class == "mage":
-            _mage_light_attack()
-        elif hero_class == "rogue":
-            _rogue_light_attack()
-        elif hero_class == "paladin":
-            _paladin_light_attack()
-        elif hero_class == "archer":
-            _archer_light_attack()
-        elif hero_class == "barbarian":
-            _barbarian_light_attack()
-        elif hero_class == "fighter":
-            _fighter_light_attack()
-        elif hero_class == "monk":
-            _monk_light_attack()
-        elif hero_class == "ranger":
-            _ranger_light_attack()
-        elif hero_class == "cleric":
-            _cleric_light_attack()
-        elif hero_class == "bard":
-            _bard_light_attack()
-        elif hero_class == "druid":
-            _druid_light_attack()
-        elif hero_class == "sorcerer":
-            _sorcerer_light_attack()
-        elif hero_class == "warlock":
-            _warlock_light_attack()
-        elif hero_class == "wizard":
-            _wizard_light_attack()
-        else:
-            _warrior_light_attack()
+        _perform_light_attack()
+    elif attack_buffer > 0.0 and attack_lock <= 0.0:
+        attack_buffer = 0.0
+        _perform_light_attack()
     elif (Input.is_action_just_pressed("heavy_attack") or mouse_heavy_pressed) and attack_lock <= 0.0:
         if hero_class == "mage":
             _mage_heavy_attack()
@@ -2295,6 +2311,7 @@ func reset_at(where: Vector2) -> void:
     air_jumps_remaining = max_air_jumps
     dash_buffer = 0.0
     attack_buffer = 0.0
+    console_attack_queue = 0
     action_visual_time = 0.0
     action_visual_kind = ""
     animation_state = "idle"
