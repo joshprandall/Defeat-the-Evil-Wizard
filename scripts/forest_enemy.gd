@@ -28,17 +28,17 @@ func setup(kind: String, at: Vector2, hero: Hero) -> ForestEnemy:
     hover_origin_y = at.y
     match enemy_type:
         "gloom_moth":
-            max_health = 58.0
+            max_health = 44.0
             move_speed = 150.0
             attack_damage = 13.0
             attack_range = 330.0
         "root_guard":
-            max_health = 148.0
+            max_health = 92.0
             move_speed = 72.0
             attack_damage = 24.0
             attack_range = 82.0
         _:
-            max_health = 82.0
+            max_health = 66.0
             move_speed = 142.0
             attack_damage = 16.0
             attack_range = 62.0
