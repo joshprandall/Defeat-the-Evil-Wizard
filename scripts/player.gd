@@ -928,9 +928,15 @@ func _warrior_light_attack() -> void:
     _set_action_pose("warrior_light_%d" % combo_step,attack_lock)
     attack_lock = [0.15, 0.17, 0.25][combo_step - 1]
     var damages: Array[float] = [18.0, 22.0, 34.0]
-    var reaches: Array[float] = [62.0, 68.0, 78.0]
+    var reaches: Array[float] = [68.0, 74.0, 84.0]
+    # Keep the target inside the first two follow-up swings; reserve the large
+    # launch for the finisher. The previous per-hit knockback could make a valid
+    # first hit shove a Crawler outside hits two and three, which felt "attack proof".
+    var knockbacks: Array[float] = [95.0, 135.0, 390.0]
+    if combo_step <= 2:
+        velocity.x += facing * 34.0
     sfx_requested.emit("slash", -7.0, 0.94 + combo_step * 0.06)
-    _strike(damages[combo_step - 1] * damage_multiplier, reaches[combo_step - 1], 44.0, 260.0 + combo_step * 45.0)
+    _strike(damages[combo_step - 1] * damage_multiplier, reaches[combo_step - 1], 48.0, knockbacks[combo_step - 1])
 
 func _warrior_heavy_attack() -> void:
     attack_lock = 0.44
