@@ -78,11 +78,25 @@ func _scale() -> float:
 func _joystick_center() -> Vector2:
     var viewport_size: Vector2 = get_viewport_rect().size
     var factor: float = _scale()
+    if _portrait():
+        return Vector2(142.0 * factor, viewport_size.y - 150.0 * factor)
     return Vector2(155.0 * factor, viewport_size.y - 135.0 * factor)
 
 func _buttons() -> Dictionary:
     var viewport_size: Vector2 = get_viewport_rect().size
     var factor: float = _scale()
+    if _portrait():
+        return {
+            "attack": Vector2(viewport_size.x - 86.0 * factor, viewport_size.y - 118.0 * factor),
+            "jump": Vector2(viewport_size.x - 205.0 * factor, viewport_size.y - 92.0 * factor),
+            "heavy_attack": Vector2(viewport_size.x - 82.0 * factor, viewport_size.y - 238.0 * factor),
+            "dash": Vector2(viewport_size.x - 205.0 * factor, viewport_size.y - 212.0 * factor),
+            "interact": Vector2(viewport_size.x - 82.0 * factor, viewport_size.y - 358.0 * factor),
+            "ability_one": Vector2(viewport_size.x - 205.0 * factor, viewport_size.y - 332.0 * factor),
+            "ability_two": Vector2(viewport_size.x - 82.0 * factor, viewport_size.y - 478.0 * factor),
+            "ultimate": Vector2(viewport_size.x - 205.0 * factor, viewport_size.y - 452.0 * factor),
+            "pause": Vector2(viewport_size.x - 54.0 * factor, 54.0 * factor),
+        }
     return {
         "attack": Vector2(viewport_size.x - 117.0 * factor, viewport_size.y - 119.0 * factor),
         "jump": Vector2(viewport_size.x - 226.0 * factor, viewport_size.y - 81.0 * factor),
@@ -110,9 +124,6 @@ func _input(event: InputEvent) -> void:
         return
     if event is InputEventScreenTouch:
         var touch: InputEventScreenTouch = event
-        if _portrait():
-            get_viewport().set_input_as_handled()
-            return
         if touch.pressed:
             _touch_down(touch.index, touch.position)
         else:
@@ -196,9 +207,8 @@ func _draw() -> void:
     var viewport_size: Vector2 = get_viewport_rect().size
     var factor: float = _scale()
     if _portrait():
-        draw_rect(Rect2(Vector2.ZERO, viewport_size), Color(0.02, 0.03, 0.05, 0.85))
-        draw_string(font, Vector2(0.0, viewport_size.y * 0.5), "ROTATE PHONE TO PLAY", HORIZONTAL_ALIGNMENT_CENTER, viewport_size.x, 22, INK)
-        return
+        draw_rect(Rect2(0,0,viewport_size.x,34.0*factor),Color(0.02,0.03,0.05,0.46))
+        draw_string(font,Vector2(0,23.0*factor),"PORTRAIT COMPATIBILITY MODE  •  LANDSCAPE RECOMMENDED",HORIZONTAL_ALIGNMENT_CENTER,viewport_size.x,maxi(9,int(13.0*factor)),Color(0.92,0.88,0.76,0.82))
     var stick: Vector2 = _joystick_center()
     draw_circle(stick, 89.0 * factor, FILL)
     draw_arc(stick, 89.0 * factor, 0.0, TAU, 48, RIM, 3.0 * factor, true)
