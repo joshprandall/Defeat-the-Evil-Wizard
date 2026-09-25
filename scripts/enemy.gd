@@ -24,6 +24,7 @@ var spawn_position := Vector2.ZERO
 # Presentation only. Keep combat timing, collision and enemy behavior unchanged.
 var visual_time: float = 0.0
 var hurt_glow: float = 0.0
+var tutorial_enemy: bool = false
 
 func setup(kind: String, at: Vector2, hero: Hero) -> RealmEnemy:
     enemy_type = kind
@@ -49,6 +50,22 @@ func setup(kind: String, at: Vector2, hero: Hero) -> RealmEnemy:
             attack_damage = 14.0
             attack_range = 56.0
     health = max_health
+    return self
+
+func make_tutorial_enemy() -> RealmEnemy:
+    tutorial_enemy = true
+    if enemy_type == "crawler":
+        # The first encounter teaches combat rather than punishing the player:
+        # three ordinary light attacks are enough even if the player does not
+        # understand combo timing yet.
+        max_health = 48.0
+        health = max_health
+        move_speed = 92.0
+        attack_damage = 8.0
+        attack_range = 52.0
+        aggro_range = 380.0
+        attack_cooldown = 1.25
+    queue_redraw()
     return self
 
 func _ready() -> void:
@@ -179,9 +196,10 @@ func take_damage(amount: float, knockback: float = 0.0, _source: Vector2 = Vecto
     attack_pending = false
     windup_time = 0.0
     request_flash.emit(global_position + Vector2(0,-25), Color("#ffd99a"))
-    damage_text_requested.emit(global_position + Vector2(0,-66), "%d" % int(round(amount)), Color("#ffe0a5"))
+    damage_text_requested.emit(global_position + Vector2(0,-66), "HIT %d" % int(round(amount)), Color("#ffe0a5"))
     queue_redraw()
     if health <= 0.0:
+        damage_text_requested.emit(global_position + Vector2(0,-82), "DEFEATED", Color("#fff0ba"))
         collision_layer = 0
         sfx_requested.emit("enemy_down", -9.0, randf_range(0.90, 1.12))
         died.emit(self)
@@ -258,7 +276,7 @@ func _draw() -> void:
         draw_arc(Vector2(0,-28),radius + 5.0,0.0,TAU,24,Color(1.0,0.85,0.61,intensity*0.85),3.0)
         draw_circle(Vector2(facing*radius,-28),4.0 + intensity*3.0,Color(1.0,0.90,0.69,intensity*0.75))
 
-    if health < max_health or hurt_glow > 0.0:
+    if tutorial_enemy or health < max_health or hurt_glow > 0.0:
         var width := 60.0 if enemy_type != "sentinel" else 72.0
         var ratio := clampf(health / max_health, 0.0, 1.0)
         draw_rect(Rect2(-width*0.5,-70,width,7),Color(0.02,0.03,0.05,0.92))
