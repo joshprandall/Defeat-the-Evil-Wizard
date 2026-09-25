@@ -840,7 +840,10 @@ func _spawn_player() -> void:
     player.add_child(camera)
 
 func _spawn_initial_enemies() -> void:
-    _spawn_enemy("crawler",Vector2(900,560))
+    var tutorial_crawler: RealmEnemy = _spawn_enemy("crawler",Vector2(900,560))
+    if is_instance_valid(tutorial_crawler):
+        tutorial_crawler.make_tutorial_enemy()
+        tutorial_crawler.died.connect(_on_tutorial_crawler_died)
     _spawn_enemy("wisp",Vector2(1370,560))
     _spawn_enemy("sentinel",Vector2(1760,560))
     _spawn_enemy("crawler",Vector2(2210,560))
@@ -892,15 +895,22 @@ func _spawn_initial_enemies() -> void:
     _spawn_tower_enemy("void_sentry",Vector2(38600,1580))
     _spawn_tower_enemy("arcane_eye",Vector2(40800,1450))
 
-func _spawn_enemy(kind: String, at: Vector2) -> void:
+func _spawn_enemy(kind: String, at: Vector2) -> RealmEnemy:
     if not is_instance_valid(player):
-        return
+        return null
     var enemy: RealmEnemy = RealmEnemy.new().setup(kind,at,player)
     enemy.add_to_group("realm_enemies")
     add_child(enemy)
     enemy.request_flash.connect(_spawn_flash)
     enemy.damage_text_requested.connect(_spawn_damage_text)
     enemy.sfx_requested.connect(_play_sfx)
+    return enemy
+
+func _on_tutorial_crawler_died(_enemy: RealmEnemy) -> void:
+    if not is_instance_valid(hud):
+        return
+    hud.set_objective("Cross the Fallen Village")
+    hud.announce("CRAWLER DEFEATED  //  KEEP MOVING RIGHT",2.4)
 
 func _spawn_forest_enemy(kind: String, at: Vector2) -> void:
     if not is_instance_valid(player):
@@ -1980,7 +1990,8 @@ func _on_cutscene_finished(id: String) -> void:
     _update_music_context(true)
 
     if id == "prologue":
-        hud.announce("THE FALLEN VILLAGE  //  THE LAST ROAD BEGINS",2.2)
+        hud.set_objective("Defeat the first Crawler")
+        hud.announce("FIRST ENCOUNTER  //  ATTACK UNTIL THE RED HEALTH BAR EMPTIES",4.2)
     elif id == "black_gate":
         hud.set_objective("Enter the Whispering Woods")
         hud.announce("THE SHADOW FALLS  //  THE TRUE WIZARD REMAINS",2.2)

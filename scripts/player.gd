@@ -2033,12 +2033,16 @@ func _spawn_spell_burst(at: Vector2, radius: float, color: Color) -> void:
 func _strike(damage: float, reach: float, height: float, knockback: float, stun: float = 0.0) -> void:
     var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
     var rect: RectangleShape2D = RectangleShape2D.new()
-    rect.size = Vector2(reach,height)
+    # Allow a small amount of overlap behind the hero's front edge. Enemies
+    # do not physically collide with the player, so without this margin a
+    # rushing enemy can stand inside the old 18 px dead zone and appear
+    # "attack proof" even while touching the hero.
+    var overlap_margin: float = 18.0
+    rect.size = Vector2(reach + overlap_margin,height)
     # Melee follows the hero's facing direction so keyboard and handheld
     # attacks are deterministic even when there is no mouse/right-stick aim.
     var direction: Vector2 = Vector2(facing,0.0)
-    var center: Vector2 = global_position+Vector2(0,-30)+direction*(reach*0.5+18.0)
-    rect.size = Vector2(reach,height)
+    var center: Vector2 = global_position+Vector2(0,-30)+direction*((reach-overlap_margin)*0.5)
     query.shape = rect
     query.transform = Transform2D(direction.angle(),center)
     query.collision_mask = 2

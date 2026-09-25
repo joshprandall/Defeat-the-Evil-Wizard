@@ -61,6 +61,25 @@ func _run() -> void:
     hero.call("_strike",20.0,62.0,44.0,0.0,0.0)
     _assert_true(enemy.health < enemy_before,"melee follows facing when mouse aim is stale")
 
+    enemy.queue_free()
+    await physics_frame
+
+    var tutorial := RealmEnemy.new().setup("crawler",Vector2(6,0),hero)
+    tutorial.make_tutorial_enemy()
+    world.add_child(tutorial)
+    await physics_frame
+    hero.global_position = Vector2(0,0)
+    hero.facing = 1.0
+    hero.call("_strike",18.0,62.0,44.0,0.0,0.0)
+    _assert_close(tutorial.health,30.0,"point-blank enemy inside former dead zone takes damage")
+    tutorial.global_position = Vector2(6,0)
+    tutorial.velocity = Vector2.ZERO
+    hero.call("_strike",18.0,62.0,44.0,0.0,0.0)
+    tutorial.global_position = Vector2(6,0)
+    tutorial.velocity = Vector2.ZERO
+    hero.call("_strike",18.0,62.0,44.0,0.0,0.0)
+    _assert_close(tutorial.health,0.0,"tutorial crawler dies in three ordinary light hits")
+
     world.queue_free()
     if failures == 0:
         print("Mobile gameplay regression tests passed.")
