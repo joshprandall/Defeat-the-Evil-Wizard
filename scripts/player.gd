@@ -63,6 +63,7 @@ var gait_time: float = 0.0
 var last_damage_time: float = 99.0
 var dash_buffer: float = 0.0
 var attack_buffer: float = 0.0
+var console_attack_queue: int = 0
 var max_air_jumps: int = 0
 var air_jumps_remaining: int = 0
 var animation_state: String = "idle"
@@ -359,6 +360,46 @@ func configure_class(class_id: String) -> void:
     identity_changed.emit(display_name, resource_name, resource_color, resource_help)
     queue_redraw()
 
+func queue_console_attack() -> void:
+    # Mobile WebViews can deliver pointer-down and pointer-up between two Godot
+    # physics frames. Keep up to a full three-hit combo queued so every deliberate
+    # ATTACK tap survives that browser timing and rapid taps feel responsive.
+    if controls_locked or health <= 0.0:
+        return
+    console_attack_queue = mini(console_attack_queue + 1, 3)
+
+func _perform_light_attack() -> void:
+    if hero_class == "mage":
+        _mage_light_attack()
+    elif hero_class == "rogue":
+        _rogue_light_attack()
+    elif hero_class == "paladin":
+        _paladin_light_attack()
+    elif hero_class == "archer":
+        _archer_light_attack()
+    elif hero_class == "barbarian":
+        _barbarian_light_attack()
+    elif hero_class == "fighter":
+        _fighter_light_attack()
+    elif hero_class == "monk":
+        _monk_light_attack()
+    elif hero_class == "ranger":
+        _ranger_light_attack()
+    elif hero_class == "cleric":
+        _cleric_light_attack()
+    elif hero_class == "bard":
+        _bard_light_attack()
+    elif hero_class == "druid":
+        _druid_light_attack()
+    elif hero_class == "sorcerer":
+        _sorcerer_light_attack()
+    elif hero_class == "warlock":
+        _warlock_light_attack()
+    elif hero_class == "wizard":
+        _wizard_light_attack()
+    else:
+        _warrior_light_attack()
+
 func _physics_process(delta: float) -> void:
     was_on_floor = is_on_floor()
     gait_time += delta * (7.0 + absf(velocity.x) * 0.025)
@@ -558,38 +599,13 @@ func _physics_process(delta: float) -> void:
         var decel: float = friction if is_on_floor() else friction * 0.24
         velocity.x = move_toward(velocity.x, 0.0, decel * delta)
 
-    if attack_buffer > 0.0 and attack_lock <= 0.0:
+    if console_attack_queue > 0 and attack_lock <= 0.0:
+        console_attack_queue -= 1
         attack_buffer = 0.0
-        if hero_class == "mage":
-            _mage_light_attack()
-        elif hero_class == "rogue":
-            _rogue_light_attack()
-        elif hero_class == "paladin":
-            _paladin_light_attack()
-        elif hero_class == "archer":
-            _archer_light_attack()
-        elif hero_class == "barbarian":
-            _barbarian_light_attack()
-        elif hero_class == "fighter":
-            _fighter_light_attack()
-        elif hero_class == "monk":
-            _monk_light_attack()
-        elif hero_class == "ranger":
-            _ranger_light_attack()
-        elif hero_class == "cleric":
-            _cleric_light_attack()
-        elif hero_class == "bard":
-            _bard_light_attack()
-        elif hero_class == "druid":
-            _druid_light_attack()
-        elif hero_class == "sorcerer":
-            _sorcerer_light_attack()
-        elif hero_class == "warlock":
-            _warlock_light_attack()
-        elif hero_class == "wizard":
-            _wizard_light_attack()
-        else:
-            _warrior_light_attack()
+        _perform_light_attack()
+    elif attack_buffer > 0.0 and attack_lock <= 0.0:
+        attack_buffer = 0.0
+        _perform_light_attack()
     elif (Input.is_action_just_pressed("heavy_attack") or mouse_heavy_pressed) and attack_lock <= 0.0:
         if hero_class == "mage":
             _mage_heavy_attack()
@@ -912,9 +928,15 @@ func _warrior_light_attack() -> void:
     _set_action_pose("warrior_light_%d" % combo_step,attack_lock)
     attack_lock = [0.15, 0.17, 0.25][combo_step - 1]
     var damages: Array[float] = [18.0, 22.0, 34.0]
-    var reaches: Array[float] = [62.0, 68.0, 78.0]
+    var reaches: Array[float] = [68.0, 74.0, 84.0]
+    # Keep the target inside the first two follow-up swings; reserve the large
+    # launch for the finisher. The previous per-hit knockback could make a valid
+    # first hit shove a Crawler outside hits two and three, which felt "attack proof".
+    var knockbacks: Array[float] = [95.0, 135.0, 390.0]
+    if combo_step <= 2:
+        velocity.x += facing * 34.0
     sfx_requested.emit("slash", -7.0, 0.94 + combo_step * 0.06)
-    _strike(damages[combo_step - 1] * damage_multiplier, reaches[combo_step - 1], 44.0, 260.0 + combo_step * 45.0)
+    _strike(damages[combo_step - 1] * damage_multiplier, reaches[combo_step - 1], 48.0, knockbacks[combo_step - 1])
 
 func _warrior_heavy_attack() -> void:
     attack_lock = 0.44
@@ -2295,6 +2317,7 @@ func reset_at(where: Vector2) -> void:
     air_jumps_remaining = max_air_jumps
     dash_buffer = 0.0
     attack_buffer = 0.0
+    console_attack_queue = 0
     action_visual_time = 0.0
     action_visual_kind = ""
     animation_state = "idle"

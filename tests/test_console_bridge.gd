@@ -22,24 +22,56 @@ func _verify() -> void:
     _message(bridge, "move_right", true, "stick-right")
     _message(bridge, "move_right", true, "dpad-right")
     _message(bridge, "jump", true, "jump-finger")
+    var hero: Hero = current_scene.get("player") as Hero
+    _check(hero != null, "Movement Lab hero exists")
+    if hero != null:
+        hero.console_attack_queue = 0
     _message(bridge, "attack", true, "attack-finger")
     _check(Input.is_action_pressed("move_right"), "independent stick and dpad movement")
     _check(Input.is_action_pressed("jump"), "jump while moving")
-    _check(Input.is_action_pressed("attack"), "attack while moving")
+    _check(hero != null and hero.console_attack_queue == 1, "handheld attack is queued independently of browser hold duration")
     _message(bridge, "move_right", false, "stick-right")
     _check(Input.is_action_pressed("move_right"), "releasing one right pointer preserves the other")
     _message(bridge, "move_right", false, "dpad-right")
     _check(not Input.is_action_pressed("move_right"), "last movement pointer releases")
     _message(bridge, "jump", false, "jump-finger")
     _check(not Input.is_action_pressed("jump"), "jump releases independently")
-    _check(Input.is_action_pressed("attack"), "attack stays held after jump release")
     _message(bridge, "attack", false, "attack-finger")
-    _check(not Input.is_action_pressed("attack"), "attack releases independently")
+    _check(not Input.is_action_pressed("attack"), "handheld attack does not depend on a held Input action")
+    if hero != null:
+        hero.console_attack_queue = 0
     _message(bridge, "attack", true, "attack-2")
+    _message(bridge, "attack", false, "attack-2")
     bridge.call("_receive_payload", {"channel": CHANNEL, "kind": "reset"})
-    _check(not Input.is_action_pressed("attack"), "blur/reset releases all controls")
+    _check(hero != null and hero.console_attack_queue == 1, "reset does not erase an already queued attack tap")
     _message(bridge, "not_a_game_action", true, "bad")
     _check(not InputMap.has_action("not_a_game_action"), "unknown action cannot be injected")
+
+    # Reproduce the iPhone failure mode: three extremely fast ATTACK taps whose
+    # pointer-down/up pairs can all arrive between physics frames. They must be
+    # retained as a three-hit Warrior combo and kill the starter Crawler.
+    if hero != null:
+        hero.reset_at(Vector2(180,560))
+        hero.configure_class("warrior")
+        hero.console_attack_queue = 0
+        var enemy: RealmEnemy = RealmEnemy.new().setup("crawler",Vector2(236,560),hero)
+        enemy.max_health = 50.0
+        enemy.health = 50.0
+        enemy.stun_time = 99.0
+        current_scene.add_child(enemy)
+        await physics_frame
+        var starting_health: float = enemy.health
+        for tap: int in range(3):
+            var pointer: String = "rapid-attack-%d" % tap
+            _message(bridge, "attack", true, pointer)
+            _message(bridge, "attack", false, pointer)
+        _check(hero.console_attack_queue == 3, "three rapid phone taps remain queued")
+        for _frame: int in range(70):
+            await physics_frame
+            if not is_instance_valid(enemy) or enemy.health <= 0.0:
+                break
+        _check(not is_instance_valid(enemy) or enemy.health <= 0.0, "three rapid Warrior taps kill the 50 HP starter Crawler")
+        _check(starting_health == 50.0, "starter Crawler regression uses onboarding health")
 
     bridge.call("_receive_payload", {
         "channel": CHANNEL,
