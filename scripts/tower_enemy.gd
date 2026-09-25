@@ -146,11 +146,24 @@ func _execute_attack() -> void:
     if enemy_type=="void_sentry":
         velocity.x = facing*360.0
 
-    if absf(dx)<=attack_range+24.0 and absf(dy)<120.0:
+    if _can_melee_target(24.0):
         var knockback: float = 650.0 if enemy_type=="shadow_knight" else 390.0
         target.take_damage(attack_damage,signf(dx)*knockback,global_position)
         request_flash.emit(target.global_position+Vector2(0,-28),Color("#c78ee0"))
     sfx_requested.emit("enemy_attack",-8.0,0.70 if enemy_type=="shadow_knight" else 1.15)
+
+func _can_melee_target(reach_bonus: float = 0.0) -> bool:
+    if not is_instance_valid(target):
+        return false
+    var dx: float = target.global_position.x-global_position.x
+    var dy: float = target.global_position.y-global_position.y
+    var max_vertical: float = 82.0 if enemy_type=="shadow_knight" else 62.0
+    if absf(dx) > attack_range+reach_bonus or absf(dy) > max_vertical:
+        return false
+    var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(
+        global_position+Vector2(0,-32),target.global_position+Vector2(0,-29),4,[get_rid()]
+    )
+    return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
 
 func take_damage(amount: float, knockback: float = 0.0, _source: Vector2 = Vector2.ZERO, stun: float = 0.0) -> void:
     if health<=0.0:
