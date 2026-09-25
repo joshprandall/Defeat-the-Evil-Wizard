@@ -55,6 +55,7 @@ var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var shard_count: int = 0
 var shard_total: int = 5
 var village_announced: bool = false
+var combat_tutorial_shown: bool = false
 var chapel_announced: bool = false
 var selected_class: String = "warrior"
 var collected_shard_ids: Array[String] = []
@@ -197,6 +198,10 @@ func _process(delta: float) -> void:
     _enforce_player_world_bounds()
     _update_camera(delta)
     _update_interactions()
+
+    if not combat_tutorial_shown and player.global_position.x > 620.0:
+        combat_tutorial_shown = true
+        hud.announce("COMBAT  //  ATTACK THE CRAWLER — ENEMIES CAN AND SHOULD BE DEFEATED",3.0)
 
     if not village_announced and player.global_position.x > 860.0:
         village_announced = true
@@ -840,7 +845,13 @@ func _spawn_player() -> void:
     player.add_child(camera)
 
 func _spawn_initial_enemies() -> void:
-    _spawn_enemy("crawler",Vector2(900,560))
+    var starter_crawler: RealmEnemy = _spawn_enemy("crawler",Vector2(900,560))
+    if starter_crawler != null:
+        # The first enemy is an onboarding target, not a difficulty spike.
+        # Two clean Warrior hits or one full rapid combo should make progress
+        # unmistakable for a first-time phone player.
+        starter_crawler.max_health = 50.0
+        starter_crawler.health = 50.0
     _spawn_enemy("wisp",Vector2(1370,560))
     _spawn_enemy("sentinel",Vector2(1760,560))
     _spawn_enemy("crawler",Vector2(2210,560))
@@ -892,15 +903,16 @@ func _spawn_initial_enemies() -> void:
     _spawn_tower_enemy("void_sentry",Vector2(38600,1580))
     _spawn_tower_enemy("arcane_eye",Vector2(40800,1450))
 
-func _spawn_enemy(kind: String, at: Vector2) -> void:
+func _spawn_enemy(kind: String, at: Vector2) -> RealmEnemy:
     if not is_instance_valid(player):
-        return
+        return null
     var enemy: RealmEnemy = RealmEnemy.new().setup(kind,at,player)
     enemy.add_to_group("realm_enemies")
     add_child(enemy)
     enemy.request_flash.connect(_spawn_flash)
     enemy.damage_text_requested.connect(_spawn_damage_text)
     enemy.sfx_requested.connect(_play_sfx)
+    return enemy
 
 func _spawn_forest_enemy(kind: String, at: Vector2) -> void:
     if not is_instance_valid(player):
