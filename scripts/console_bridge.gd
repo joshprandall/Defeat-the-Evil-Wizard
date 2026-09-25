@@ -159,6 +159,15 @@ func _receive_payload(payload: Dictionary) -> void:
             _release_pointer(pointer)
         var first_hold: bool = action not in _held.values()
         _held[pointer] = action
+        if action == "attack":
+            # ATTACK is discrete on the handheld console. Queue it directly in
+            # the Hero so an iOS/WebView tap cannot vanish between physics frames.
+            var scene: Node = get_tree().current_scene
+            if scene != null:
+                var hero: Hero = scene.get("player") as Hero
+                if hero != null:
+                    hero.queue_console_attack()
+            return
         if first_hold:
             _send_action(action, true)
     else:
@@ -302,10 +311,14 @@ func _release_pointer(pointer: String) -> void:
     var action: String = str(_held[pointer])
     _held.erase(pointer)
     if action not in _held.values():
+        if action == "attack":
+            return
         _send_action(action, false)
 
 func _release_all() -> void:
     for action: Variant in _held.values().duplicate():
+        if str(action) == "attack":
+            continue
         if InputMap.has_action(str(action)):
             _send_action(str(action), false)
     _held.clear()
