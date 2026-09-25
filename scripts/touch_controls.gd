@@ -67,25 +67,30 @@ func _gameplay_active() -> bool:
             return false
     return true
 
-func _portrait() -> bool:
-    var viewport_size: Vector2 = get_viewport_rect().size
+func _portrait_for(viewport_size: Vector2) -> bool:
     return viewport_size.y > viewport_size.x
 
-func _scale() -> float:
-    var viewport_size: Vector2 = get_viewport_rect().size
+func _portrait() -> bool:
+    return _portrait_for(get_viewport_rect().size)
+
+func _scale_for(viewport_size: Vector2) -> float:
     return clampf(minf(viewport_size.x / 1280.0, viewport_size.y / 720.0), 0.60, 1.25)
 
-func _joystick_center() -> Vector2:
-    var viewport_size: Vector2 = get_viewport_rect().size
-    var factor: float = _scale()
-    if _portrait():
+func _scale() -> float:
+    return _scale_for(get_viewport_rect().size)
+
+func _joystick_center_for(viewport_size: Vector2) -> Vector2:
+    var factor: float = _scale_for(viewport_size)
+    if _portrait_for(viewport_size):
         return Vector2(142.0 * factor, viewport_size.y - 150.0 * factor)
     return Vector2(155.0 * factor, viewport_size.y - 135.0 * factor)
 
-func _buttons() -> Dictionary:
-    var viewport_size: Vector2 = get_viewport_rect().size
-    var factor: float = _scale()
-    if _portrait():
+func _joystick_center() -> Vector2:
+    return _joystick_center_for(get_viewport_rect().size)
+
+func _buttons_for(viewport_size: Vector2) -> Dictionary:
+    var factor: float = _scale_for(viewport_size)
+    if _portrait_for(viewport_size):
         return {
             "attack": Vector2(viewport_size.x - 86.0 * factor, viewport_size.y - 118.0 * factor),
             "jump": Vector2(viewport_size.x - 205.0 * factor, viewport_size.y - 92.0 * factor),
@@ -108,6 +113,9 @@ func _buttons() -> Dictionary:
         "ultimate": Vector2(viewport_size.x - 91.0 * factor, viewport_size.y - 346.0 * factor),
         "pause": Vector2(viewport_size.x - 44.0 * factor, 43.0 * factor),
     }
+
+func _buttons() -> Dictionary:
+    return _buttons_for(get_viewport_rect().size)
 
 func _radius(action: String) -> float:
     var base_radius: float = 42.0
