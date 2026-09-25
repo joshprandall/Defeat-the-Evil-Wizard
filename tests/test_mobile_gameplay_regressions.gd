@@ -71,24 +71,32 @@ func _run() -> void:
     hero.call("_strike",18.0,62.0,44.0,0.0,0.0)
     _assert_true(point_blank.health < point_blank_before,"point-blank overlapping enemy is hittable")
     point_blank.queue_free()
+    enemy.queue_free()
     await process_frame
+    await physics_frame
 
     # Normal early enemies are deliberately a short encounter: three clean
-    # Warrior light attacks must kill a crawler.
+    # Warrior light attacks must kill a crawler. Verify every health transition
+    # so a future hit-detection regression cannot hide behind a final-state test.
     var ttk_enemy := RealmEnemy.new().setup("crawler",Vector2(34,0),hero)
     world.add_child(ttk_enemy)
     await physics_frame
+    await physics_frame
+    hero.global_position = Vector2(0,0)
+    hero.facing = 1.0
     hero.combo_step = 0
     hero.combo_timer = 0.0
     hero.damage_multiplier = 1.0
+    _assert_close(ttk_enemy.health,58.0,"crawler QA health budget")
     hero.call("_warrior_light_attack")
-    _assert_true(ttk_enemy.health > 0.0,"crawler survives first light hit")
+    _assert_close(ttk_enemy.health,40.0,"crawler health after light hit one")
     hero.call("_warrior_light_attack")
-    _assert_true(ttk_enemy.health > 0.0,"crawler survives second light hit")
+    _assert_close(ttk_enemy.health,18.0,"crawler health after light hit two")
     hero.call("_warrior_light_attack")
-    _assert_true(ttk_enemy.health <= 0.0,"crawler dies within three clean light hits")
+    _assert_close(ttk_enemy.health,0.0,"crawler health after light hit three")
     ttk_enemy.queue_free()
     await process_frame
+    await physics_frame
 
     # The platform/wall obstruction rule must apply to every standard melee
     # enemy family, not only the Fallen Village enemies.
