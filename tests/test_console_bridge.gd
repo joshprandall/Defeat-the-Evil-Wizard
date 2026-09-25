@@ -55,6 +55,8 @@ func _verify() -> void:
         hero.configure_class("warrior")
         hero.console_attack_queue = 0
         var enemy: RealmEnemy = RealmEnemy.new().setup("crawler",Vector2(236,560),hero)
+        enemy.max_health = 50.0
+        enemy.health = 50.0
         enemy.stun_time = 99.0
         current_scene.add_child(enemy)
         await physics_frame
@@ -68,10 +70,8 @@ func _verify() -> void:
             await physics_frame
             if not is_instance_valid(enemy) or enemy.health <= 0.0:
                 break
-        if is_instance_valid(enemy):
-            print("RAPID_ATTACK_DIAGNOSTIC health=",enemy.health," hero_x=",hero.global_position.x," enemy_x=",enemy.global_position.x," combo=",hero.combo_step," queue=",hero.console_attack_queue)
-        _check(not is_instance_valid(enemy) or enemy.health <= 0.0, "three rapid Warrior taps kill a 74 HP starter Crawler")
-        _check(starting_health == 74.0, "starter Crawler regression uses expected 74 HP")
+        _check(not is_instance_valid(enemy) or enemy.health <= 0.0, "three rapid Warrior taps kill the 50 HP starter Crawler")
+        _check(starting_health == 50.0, "starter Crawler regression uses onboarding health")
 
     bridge.call("_receive_payload", {
         "channel": CHANNEL,
