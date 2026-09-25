@@ -261,8 +261,8 @@ func _process(delta: float) -> void:
 
     if keep_boss_defeated and not labyrinth_announced and player.global_position.x > 21620.0:
         labyrinth_announced = true
-        hud.set_objective("Solve the Memory Labyrinth")
-        hud.announce("THE MEMORY LABYRINTH  //  THREE MEMORIES. ONE ORDER.",2.4)
+        hud.set_objective("Activate BELL → MOON → CROWN")
+        hud.announce("MEMORY LABYRINTH  //  TOUCH BELL, THEN MOON, THEN CROWN  //  INTERACT TO ACTIVATE",3.4)
 
     if keep_boss_defeated and labyrinth_solved and checkpoint_stage < 5 and player.global_position.x > 26260.0:
         checkpoint_stage = 5
@@ -1601,6 +1601,17 @@ func _update_context_tracker() -> void:
     if not is_instance_valid(hud):
         return
 
+    if keep_boss_defeated and not labyrinth_solved:
+        var order: Array[String] = ["BELL","MOON","CROWN"]
+        var next_index: int = clampi(labyrinth_progress,0,order.size()-1)
+        hud.set_puzzle_status(
+            "MEMORY RUNES",
+            labyrinth_progress,
+            3,
+            "ORDER: BELL → MOON → CROWN   //   NEXT: %s   //   SHARDS ARE OPTIONAL" % order[next_index]
+        )
+        return
+
     if labyrinth_solved and not storm_gate_solved:
         var aligned: int = 0
         for vane: StormVane in storm_vanes:
@@ -2015,6 +2026,8 @@ func _activate_labyrinth_rune(pedestal: RunePedestal) -> void:
         labyrinth_progress += 1
         audio.play_sfx("rune_correct",-6.0,0.92+float(labyrinth_progress)*0.08)
         hud.announce("%s REMEMBERED  //  %d OF 3" % [pedestal.display_name,labyrinth_progress],1.25)
+        if labyrinth_progress < order.size():
+            hud.set_objective("Next memory: %s  //  use INTERACT" % order[labyrinth_progress].to_upper())
 
         if labyrinth_progress >= order.size():
             labyrinth_solved = true
@@ -2031,7 +2044,8 @@ func _activate_labyrinth_rune(pedestal: RunePedestal) -> void:
             if is_instance_valid(rune):
                 rune.set_activated(false)
         audio.play_sfx("rune_wrong",-5.0,0.92)
-        hud.announce("THE ORDER BREAKS  //  THE MAZE FORGETS",1.6)
+        hud.set_objective("Activate BELL → MOON → CROWN")
+        hud.announce("WRONG MEMORY  //  ORDER RESET: BELL → MOON → CROWN",2.4)
 
 func _restore_labyrinth_solved() -> void:
     labyrinth_progress = 3

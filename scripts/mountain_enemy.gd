@@ -25,17 +25,17 @@ func setup(kind: String, at: Vector2, hero: Hero) -> MountainEnemy:
     target = hero
     match enemy_type:
         "storm_shaman":
-            max_health = 86.0
+            max_health = 66.0
             move_speed = 78.0
             attack_damage = 17.0
             attack_range = 360.0
         "stone_raider":
-            max_health = 142.0
+            max_health = 96.0
             move_speed = 92.0
             attack_damage = 24.0
             attack_range = 82.0
         _:
-            max_health = 88.0
+            max_health = 68.0
             move_speed = 175.0
             attack_damage = 18.0
             attack_range = 62.0
@@ -137,11 +137,24 @@ func _execute_attack() -> void:
     if enemy_type=="ash_hound":
         velocity.x = facing*470.0
 
-    if absf(dx)<=attack_range+25.0 and absf(dy)<115.0:
+    if _can_melee_target(25.0):
         var knockback: float = 560.0 if enemy_type=="stone_raider" else 360.0
         target.take_damage(attack_damage,signf(dx)*knockback,global_position)
         request_flash.emit(target.global_position+Vector2(0,-28),Color("#e18c6f"))
     sfx_requested.emit("enemy_attack",-8.0,0.72 if enemy_type=="stone_raider" else 1.16)
+
+func _can_melee_target(reach_bonus: float = 0.0) -> bool:
+    if not is_instance_valid(target):
+        return false
+    var dx: float = target.global_position.x-global_position.x
+    var dy: float = target.global_position.y-global_position.y
+    var max_vertical: float = 78.0 if enemy_type=="stone_raider" else 60.0
+    if absf(dx) > attack_range+reach_bonus or absf(dy) > max_vertical:
+        return false
+    var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(
+        global_position+Vector2(0,-31),target.global_position+Vector2(0,-29),4,[get_rid()]
+    )
+    return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
 
 func take_damage(amount: float, knockback: float = 0.0, _source: Vector2 = Vector2.ZERO, stun: float = 0.0) -> void:
     if health<=0.0:

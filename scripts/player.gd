@@ -2033,12 +2033,15 @@ func _spawn_spell_burst(at: Vector2, radius: float, color: Color) -> void:
 func _strike(damage: float, reach: float, height: float, knockback: float, stun: float = 0.0) -> void:
     var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
     var rect: RectangleShape2D = RectangleShape2D.new()
-    rect.size = Vector2(reach,height)
-    # Melee follows the hero's facing direction so keyboard and handheld
-    # attacks are deterministic even when there is no mouse/right-stick aim.
+    # Enemies do not physically collide with the hero, so they can overlap the
+    # hero capsule during close combat. The old hit box began 18 px in front of
+    # the hero, creating a dead zone where an enemy could visibly touch the
+    # player yet ignore repeated attacks. Give melee a small overlap behind the
+    # hero and a little extra vertical forgiveness while preserving facing.
     var direction: Vector2 = Vector2(facing,0.0)
-    var center: Vector2 = global_position+Vector2(0,-30)+direction*(reach*0.5+18.0)
-    rect.size = Vector2(reach,height)
+    var overlap_margin: float = 28.0
+    rect.size = Vector2(reach + overlap_margin * 2.0,height + 12.0)
+    var center: Vector2 = global_position + Vector2(0,-30) + direction*(reach*0.5)
     query.shape = rect
     query.transform = Transform2D(direction.angle(),center)
     query.collision_mask = 2

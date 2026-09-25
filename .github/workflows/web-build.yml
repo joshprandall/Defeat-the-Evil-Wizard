@@ -18,8 +18,10 @@ jobs:
       - name: Check out game
         uses: actions/checkout@v4
 
-      - name: Validate OSU deployment tool
-        run: python3 -m py_compile tools/deploy_controls_osu.py
+      - name: Validate OSU deployment tools
+        run: |
+          python3 -m py_compile tools/deploy_controls_osu.py
+          if [ -f tools/install_full_qa_preview.py ]; then python3 -m py_compile tools/install_full_qa_preview.py; fi
 
       - name: Verify game menu, remapping, and floating controller shell
         shell: bash
@@ -38,10 +40,13 @@ jobs:
                        'Reset controls to defaults', 'Reset settings to defaults'):
               assert item in launcher, f'Missing game-menu feature: {item}'
           for item in ('data-evil-wizard-console', 'id="joystick"', 'id="game"', 'src="./index.html?build=',
-                       'orientation-gate', 'Turn your screen sideways', 'left-zone', 'right-zone',
+                       'orientation-gate', 'left-zone', 'right-zone',
                        'top-left', 'top-right', 'data-position="south"', 'data-position="north"',
-                       'xbox-label', 'ps-label', 'embeddedWebView', 'ew_launch'):
+                       'xbox-label', 'ps-label', 'embeddedWebView', 'ew_launch',
+                       'Portrait compatibility mode'):
               assert item in touch, f'Missing floating-controller feature: {item}'
+          assert '.touch-stage{visibility:hidden' not in touch, 'Portrait mode must never hide the game'
+          assert 'if(started||!bridgeReady||!landscape())return' not in touch, 'Portrait mode must not block game startup'
           assert 'class="dpad"' not in touch, 'Virtual D-pad must not return on phone/tablet controls'
           assert '--control:62px' in touch and '--joy:128px' in touch, 'Large default touch control sizing is missing'
           for item in ('keyOptions', 'gamepadOptions', 'PlayStation controller', 'Xbox / standard gamepad',
@@ -60,6 +65,11 @@ jobs:
           node --check /tmp/evil-wizard-launcher.js
           node --check /tmp/evil-wizard-touch.js
           node --check web/console-champions.js
+
+      - name: Test progression contract
+        run: |
+          set -euo pipefail
+          python3 tests/test_progression_contract.py
 
       - name: Install Godot 4.7.2 and single-threaded Web templates
         shell: bash

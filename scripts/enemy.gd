@@ -32,19 +32,19 @@ func setup(kind: String, at: Vector2, hero: Hero) -> RealmEnemy:
     target = hero
     match kind:
         "sentinel":
-            max_health = 120.0
+            max_health = 88.0
             move_speed = 76.0
             attack_damage = 21.0
             attack_range = 68.0
             aggro_range = 560.0
         "wisp":
-            max_health = 50.0
+            max_health = 44.0
             move_speed = 138.0
             attack_damage = 11.0
             attack_range = 280.0
             aggro_range = 650.0
         _:
-            max_health = 74.0
+            max_health = 58.0
             move_speed = 116.0
             attack_damage = 14.0
             attack_range = 56.0
