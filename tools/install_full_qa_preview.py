@@ -58,7 +58,7 @@ def install(data: bytes, site: Path) -> Path:
             raise ValueError("Verified build is missing required files: " + ", ".join(sorted(missing)))
         if any(not _safe_name(entry.filename) for entry in entries):
             raise ValueError("Unexpected path inside build ZIP; nothing changed.")
-        if any((entry.external_attr >> 16) & stat.S_IFMT(stat.S_IFLNK) for entry in entries):
+        if any(stat.S_IFMT(entry.external_attr >> 16) == stat.S_IFLNK for entry in entries):
             raise ValueError("Symlinks are not allowed in build ZIP; nothing changed.")
         if any(entry.file_size <= 0 for entry in entries):
             raise ValueError("Empty game asset found; nothing changed.")
