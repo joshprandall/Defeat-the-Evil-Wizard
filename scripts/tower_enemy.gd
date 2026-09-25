@@ -26,17 +26,17 @@ func setup(kind: String, at: Vector2, hero: Hero) -> TowerEnemy:
     target = hero
     match enemy_type:
         "arcane_eye":
-            max_health = 72.0
+            max_health = 60.0
             move_speed = 62.0
             attack_damage = 16.0
             attack_range = 390.0
         "shadow_knight":
-            max_health = 164.0
+            max_health = 110.0
             move_speed = 105.0
             attack_damage = 27.0
             attack_range = 88.0
         _:
-            max_health = 96.0
+            max_health = 72.0
             move_speed = 150.0
             attack_damage = 19.0
             attack_range = 72.0
