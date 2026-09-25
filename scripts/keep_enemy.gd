@@ -25,17 +25,17 @@ func setup(kind: String, at: Vector2, hero: Hero) -> KeepEnemy:
     target = hero
     match enemy_type:
         "rune_caster":
-            max_health = 72.0
+            max_health = 60.0
             move_speed = 82.0
             attack_damage = 16.0
             attack_range = 340.0
         "crypt_leech":
-            max_health = 62.0
+            max_health = 44.0
             move_speed = 205.0
             attack_damage = 14.0
             attack_range = 50.0
         _:
-            max_health = 112.0
+            max_health = 88.0
             move_speed = 95.0
             attack_damage = 21.0
             attack_range = 78.0
