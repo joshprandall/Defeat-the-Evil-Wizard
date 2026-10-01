@@ -80,7 +80,26 @@ func _apply_direct_web_launch(payload: Dictionary) -> void:
         await get_tree().process_frame
     _apply_settings(payload)
     var brightness: float = clampf(float(payload.get("brightness", 100.0)), 75.0, 135.0) / 100.0
-    JavaScriptBridge.eval("(function(){var c=document.querySelector('canvas');if(c)c.style.filter='brightness(%s)';})();" % str(brightness))
+    JavaScriptBridge.eval("""
+        (function () {
+            var c=document.querySelector('canvas');
+            if(c){c.style.filter='brightness(%s)';c.style.touchAction='none';}
+            var meta=document.querySelector('meta[name="viewport"]');
+            if(meta) meta.setAttribute('content','width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover');
+            document.documentElement.style.touchAction='none';
+            document.body.style.touchAction='none';
+            if(!window.__evilWizardDirectTouchLock){
+                window.__evilWizardDirectTouchLock=true;
+                ['gesturestart','gesturechange','gestureend'].forEach(function(type){
+                    document.addEventListener(type,function(e){e.preventDefault();},{passive:false});
+                });
+                document.addEventListener('touchmove',function(e){
+                    if(e.touches&&e.touches.length>1)e.preventDefault();
+                },{passive:false});
+                document.addEventListener('dblclick',function(e){e.preventDefault();},{passive:false});
+            }
+        })();
+    """ % str(brightness))
     _start_champion(str(payload.get("hero", "warrior")))
 
 func _process(_delta: float) -> void:

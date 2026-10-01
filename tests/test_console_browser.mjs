@@ -135,19 +135,64 @@ try {
   assert.equal(messengerErrors.length,0,`Messenger browser errors: ${messengerErrors.join('; ')}`);
   await messengerContext.close();
 
+  const messengerPortraitContext=await browser.newContext({
+    viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:1,
+    userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 [FBAN/MessengerForiOS;FBAV/530.0.0.0.0]'
+  });
+  const messengerPortrait=await messengerPortraitContext.newPage();
+  const messengerPortraitErrors=[];messengerPortrait.on('pageerror',e=>messengerPortraitErrors.push(String(e)));
+  await messengerPortrait.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
+  await messengerPortrait.locator('#champion').selectOption('warrior');
+  await Promise.all([
+    messengerPortrait.waitForURL(/\/index\.html\?.*ew_launch=1/,{timeout:15000}),
+    messengerPortrait.locator('#start').click()
+  ]);
+  await messengerPortrait.waitForSelector('canvas',{timeout:60000});
+  await messengerPortrait.waitForFunction(()=>typeof window.__evilWizardInput==='function',null,{timeout:60000});
+  await messengerPortrait.waitForFunction(()=>getComputedStyle(document.body).touchAction==='none',null,{timeout:10000});
+  const fbPortrait=await messengerPortrait.evaluate(()=>{
+    const canvas=document.querySelector('canvas').getBoundingClientRect();
+    const meta=document.querySelector('meta[name="viewport"]')?.getAttribute('content')||'';
+    return {canvas:{x:canvas.x,y:canvas.y,w:canvas.width,h:canvas.height},iw:innerWidth,ih:innerHeight,scale:visualViewport?.scale??1,touch:getComputedStyle(document.body).touchAction,meta};
+  });
+  assert.equal(fbPortrait.touch,'none','Direct Messenger launch must disable browser touch gestures');
+  assert.match(fbPortrait.meta,/maximum-scale=1/,'Direct Messenger launch must lock page scale');
+  assert.equal(fbPortrait.scale,1,'Direct Messenger portrait launch must start at normal scale');
+  assert(fbPortrait.canvas.w>0&&fbPortrait.canvas.h>0,'Direct Messenger portrait launch must render the game canvas');
+  const fbCdp=await messengerPortraitContext.newCDPSession(messengerPortrait);
+  await fbCdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:80,y:700,id:1},{x:320,y:700,id:2}]});
+  await fbCdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  assert.equal(await messengerPortrait.evaluate(()=>visualViewport?.scale??1),1,'Direct Messenger multi-touch must not zoom the page');
+  assert.equal(messengerPortraitErrors.length,0,`Messenger portrait errors: ${messengerPortraitErrors.join('; ')}`);
+  await messengerPortraitContext.close();
+
   const portraitContext=await browser.newContext({
     viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:1,
     userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1'
   });
   const portrait=await portraitContext.newPage();
+  const portraitErrors=[];portrait.on('pageerror',e=>portraitErrors.push(String(e)));
   await portrait.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
-  assert.equal(await portrait.locator('#menu').isVisible(),true,'Portrait phone must see menu before rotate prompt');
+  assert.equal(await portrait.locator('#menu').isVisible(),true,'Portrait phone must see the normal game menu');
   assert.equal(await portrait.locator('.orientation-gate').count(),0,'Main menu must never force orientation');
   await Promise.all([portrait.waitForURL(/\/console\.html\?/),portrait.locator('#start').click()]);
-  assert.equal(await portrait.locator('.orientation-gate').isVisible(),true,'Rotate prompt appears only after Start on phone/tablet');
-  await portrait.setViewportSize({width:852,height:393});
-  await portrait.waitForFunction(()=>getComputedStyle(document.querySelector('.orientation-gate')).display==='none');
-  assert.equal(await portrait.locator('.right-zone').isVisible(),true,'Landscape rotation reveals floating controller');
+  assert.equal(await portrait.locator('#game').isVisible(),true,'Portrait phone must keep the game visible after Start');
+  assert.equal(await portrait.locator('#joystick').isVisible(),true,'Portrait phone must keep the joystick visible');
+  assert.equal(await portrait.locator('.right-zone').isVisible(),true,'Portrait phone must keep face controls visible');
+  assert.equal(await portrait.locator('.orientation-gate').isVisible(),false,'Portrait compatibility mode must never cover gameplay');
+  const portraitFit=await portrait.evaluate(()=>{
+    const game=document.getElementById('game').getBoundingClientRect();
+    const joy=document.getElementById('joystick').getBoundingClientRect();
+    const face=document.querySelector('.right-zone').getBoundingClientRect();
+    const rotate=getComputedStyle(document.querySelector('.orientation-gate')).display;
+    return {game:{w:game.width,h:game.height},joy:{x:joy.x,y:joy.y,right:joy.right,bottom:joy.bottom},face:{x:face.x,y:face.y,right:face.right,bottom:face.bottom},iw:innerWidth,ih:innerHeight,rotate};
+  });
+  assert.equal(Math.round(portraitFit.game.w),portraitFit.iw,'Portrait game must fill viewport width');
+  assert.equal(Math.round(portraitFit.game.h),portraitFit.ih,'Portrait game must fill viewport height');
+  assert(portraitFit.joy.x>=0&&portraitFit.joy.right<=portraitFit.iw&&portraitFit.joy.y>=0&&portraitFit.joy.bottom<=portraitFit.ih,'Portrait joystick must stay on-screen');
+  assert(portraitFit.face.x>=0&&portraitFit.face.right<=portraitFit.iw&&portraitFit.face.y>=0&&portraitFit.face.bottom<=portraitFit.ih,'Portrait face controls must stay on-screen');
+  assert.equal(portraitFit.rotate,'none','Portrait rotate overlay must stay disabled');
+  assert.equal(portraitErrors.length,0,`Portrait browser errors: ${portraitErrors.join('; ')}`);
   await portraitContext.close();
 
   const deckContext=await browser.newContext({
@@ -184,7 +229,7 @@ try {
   assert.equal(desktopErrors.length,0,`Desktop browser errors: ${desktopErrors.join('; ')}`);
   await desktopContext.close();
 
-  console.log('Browser passed: real main menu, remappable controls, settings persistence, Xbox/PlayStation-style floating overlay, unobstructed gameplay, phone rotation flow, physical gaming handheld mode, and desktop mode.');
+  console.log('Browser passed: menu/remapping, landscape and portrait touch play, Messenger top-level compatibility, zoom lock, physical handheld mode, and desktop mode.');
 } finally {
   await browser.close();
 }

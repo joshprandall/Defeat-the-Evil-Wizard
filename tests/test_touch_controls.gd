@@ -56,6 +56,20 @@ func _verify() -> void:
     _check(not Input.is_action_pressed("attack"), "attack released")
     _check(not Input.is_action_pressed("move_right"), "movement released")
     controls.call("_release_all")
+
+    # Facebook and other iOS WebViews can refuse to rotate even when the device
+    # is physically sideways. Test the production layout math against an
+    # explicit iPhone-sized portrait viewport; headless Godot itself keeps the
+    # configured project stretch size and cannot emulate this by resizing Window.
+    var portrait_size := Vector2(393,852)
+    _check(bool(controls.call("_portrait_for",portrait_size)), "portrait compatibility mode is detected")
+    var portrait_stick: Vector2 = controls.call("_joystick_center_for",portrait_size)
+    var portrait_buttons: Dictionary = controls.call("_buttons_for",portrait_size)
+    _check(portrait_stick.x >= 0.0 and portrait_stick.x <= portrait_size.x and portrait_stick.y >= 0.0 and portrait_stick.y <= portrait_size.y, "portrait joystick stays on-screen")
+    for action: String in ["attack","jump","heavy_attack","dash","interact","ability_one","ability_two","ultimate","pause"]:
+        var p: Vector2 = portrait_buttons[action]
+        _check(p.x >= 0.0 and p.x <= portrait_size.x and p.y >= 0.0 and p.y <= portrait_size.y, "portrait %s control stays on-screen" % action)
+
     if failures > 0:
         printerr("%d input checks failed" % failures)
         quit(1)
