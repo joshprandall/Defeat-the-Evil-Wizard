@@ -18,7 +18,7 @@ try {
   });
   const phone=await phoneContext.newPage();
   const phoneErrors=[];phone.on('pageerror',e=>phoneErrors.push(String(e)));
-  await phone.goto('http://127.0.0.1:8765/play.html',{waitUntil:'domcontentloaded'});
+  await phone.goto('http://127.0.0.1:8765/play.html?diag=1',{waitUntil:'domcontentloaded'});
 
   assert.equal(await phone.locator('#menu').isVisible(),true,'Phone must open at the game menu');
   assert.equal(await phone.locator('[data-screen]').count(),4,'Game menu must expose Play, Controls, Settings, and How to Play');
@@ -56,6 +56,8 @@ try {
   assert.equal(await phone.locator('.orientation-gate').isVisible(),false,'Landscape phone must immediately show gameplay');
   assert.equal(await phone.locator('.screen-bezel').count(),0,'No virtual console frame may surround the game');
   assert.equal(await phone.locator('.dpad').count(),0,'Phone/tablet overlay must not contain a virtual D-pad');
+  assert.equal(await phone.locator('#aim-diagnostic').isVisible(),true,'Diagnostic HUD must be visible for diag=1');
+  assert.match(await phone.locator('#diag-build').textContent(),/shell:20261003-aimdiag1/,'Diagnostic HUD must identify the instrumented shell');
   assert.equal(await phone.locator('.left-zone').isVisible(),true,'Movement/aim joystick must float over the game');
   assert.equal(await phone.locator('.aim-zone').count(),0,'No separate aim zone should exist');
   assert.equal(await phone.locator('#aimstick').count(),0,'No separate aim stick should exist');
@@ -90,7 +92,7 @@ try {
   assert.match(layout.filter,/brightness\(1\.15\)/,'Brightness setting must apply to touch game');
 
   await waitForGodotBridge(phone);
-  await phone.waitForFunction(()=>window.__evilWizardRuntimeBuild==='20261003-videoaim2',null,{timeout:10000});
+  await phone.waitForFunction(()=>window.__evilWizardRuntimeBuild==='20261003-aimdiag1',null,{timeout:10000});
   await phone.waitForFunction(()=>/Opening story|INTERACT/.test(document.getElementById('status')?.textContent||''),null,{timeout:10000});
   await phone.evaluate(()=>{
     const frame=document.getElementById('game').contentWindow;
@@ -107,7 +109,9 @@ try {
   const first={x:j.x+Math.round(joy.width*.22),y:j.y-Math.round(joy.height*.18),id:1},second={x:a.x,y:a.y,id:2};
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first]});
   await phone.waitForFunction(()=>window.__audit.some(m=>m.kind==='aim'&&m.active===true&&m.x>.2&&m.y<-.1)&&window.__audit.some(m=>m.action==='move_right'&&m.pressed));
-  await phone.waitForFunction(()=>window.__evilWizardAimState?.build==='20261003-videoaim2'&&window.__evilWizardAimState.active===true&&window.__evilWizardAimState.x>.2&&window.__evilWizardAimState.y<-.1);
+  await phone.waitForFunction(()=>window.__evilWizardAimReceived?.build==='20261003-aimdiag1'&&window.__evilWizardAimReceived.active===true&&window.__evilWizardAimReceived.x>.2&&window.__evilWizardAimReceived.y<-.1);
+  await phone.waitForFunction(()=>window.__evilWizardAimState?.build==='20261003-aimdiag1'&&window.__evilWizardAimState.active===true&&window.__evilWizardAimState.x>.2&&window.__evilWizardAimState.y<-.1);
+  assert.match(await phone.locator('#diag-result').textContent(),/OK/,'Diagnostic HUD must confirm stick through Hero pipeline');
   const opposite={x:j.x-Math.round(joy.width*.22),y:j.y+Math.round(joy.height*.18),id:1};
   await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[opposite]});
   await phone.waitForFunction(()=>window.__evilWizardAimState?.active===true&&window.__evilWizardAimState.x<-.2&&window.__evilWizardAimState.y>.1);

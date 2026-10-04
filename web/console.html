@@ -31,6 +31,9 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
 .touch-stage{position:fixed;inset:0;background:#05070b;touch-action:none}
 #game{position:absolute;inset:0;display:block;width:100%;height:100%;border:0;background:#05070b;touch-action:none}
 #status{position:absolute;left:50%;top:max(6px,env(safe-area-inset-top));z-index:30;transform:translateX(-50%);max-width:60vw;padding:5px 10px;border:1px solid #746440;border-radius:999px;background:#080d14d9;color:#f2d9a2;text-align:center;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}#status.ready{display:none}
+.aim-diagnostic{display:none;position:absolute;left:50%;top:max(38px,calc(env(safe-area-inset-top) + 34px));z-index:45;transform:translateX(-50%);width:min(560px,62vw);padding:7px 10px;border:1px solid #7f93a8;border-radius:10px;background:#02050aeb;color:#e8eef7;font:800 9px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;pointer-events:none;box-shadow:0 4px 20px #000a}
+.touch-stage[data-diagnostic="true"] .aim-diagnostic{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px}
+.aim-diagnostic strong{color:#f5d399}.aim-diagnostic .ok{color:#8de392}.aim-diagnostic .bad{color:#ff8b83}.aim-diagnostic .wide{grid-column:1/-1}
 .controls{position:absolute;inset:0;z-index:20;pointer-events:none}
 .left-zone,.right-zone,.top-left,.top-right,.pause-zone{position:absolute;pointer-events:none}
 .left-zone{left:max(var(--edge),env(safe-area-inset-left));bottom:max(var(--edge),env(safe-area-inset-bottom));width:var(--joy);height:var(--joy)}
@@ -68,8 +71,18 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
 </head>
 <body>
 <main class="touch-stage" id="touch-stage" data-evil-wizard-console data-size="compact" data-hand="right" data-style="xbox">
-  <iframe id="game" title="Defeat the Evil Wizard game" src="./index.html?build=20261003-videoaim2" allow="gamepad; fullscreen" allowfullscreen tabindex="0"></iframe>
+  <iframe id="game" title="Defeat the Evil Wizard game" src="./index.html?build=20261003-aimdiag1" allow="gamepad; fullscreen" allowfullscreen tabindex="0"></iframe>
   <div id="status" role="status" aria-live="polite">Loading game…</div>
+  <aside id="aim-diagnostic" class="aim-diagnostic" aria-live="polite">
+    <div class="wide"><strong>AIM PIPELINE</strong> <span id="diag-result">waiting</span></div>
+    <div>BUILD <span id="diag-build">shell:20261003-aimdiag1 runtime:waiting</span></div>
+    <div>ARMED <span id="diag-armed">false</span></div>
+    <div>STICK <span id="diag-stick">0.000, 0.000</span></div>
+    <div>SENT <span id="diag-sent">0.000, 0.000</span></div>
+    <div>GODOT RX <span id="diag-received">waiting</span></div>
+    <div>HERO AIM <span id="diag-hero">waiting</span></div>
+    <div class="wide">PROJECTILE <span id="diag-projectile">fire once to populate</span></div>
+  </aside>
   <div class="controls" aria-label="Floating controller">
     <section class="top-left" aria-label="Left shoulder controls">
       <button class="shoulder trigger" data-position="l2"><span class="xbox-label">LT</span><span class="ps-label">L2</span></button>
@@ -94,7 +107,7 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
   </div>
 </main>
 <div class="orientation-gate" role="status" aria-live="polite"><div class="orientation-card"><span class="orientation-icon" aria-hidden="true">↻</span><h1>Turn your screen sideways</h1><p>Phone and tablet play uses landscape so the game stays visible behind the floating controls. Rotate your device to continue. <strong>Your saved control layout will load automatically.</strong></p></div></div>
-<script src="./console-champions.js?v=20261003-videoaim2"></script>
+<script src="./console-champions.js?v=20261003-aimdiag1"></script>
 <script>
 'use strict';
 (() => {
@@ -102,8 +115,9 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
   let saved={};try{saved=JSON.parse(localStorage.getItem('evil-wizard-launch-v3')||'{}')}catch(_){}
   const clone=o=>JSON.parse(JSON.stringify(o)),merge=(base,src)=>{const out=clone(base);const walk=(t,s)=>{if(!s||typeof s!=='object')return;for(const[k,v]of Object.entries(s)){if(v&&typeof v==='object'&&!Array.isArray(v)&&t[k]&&typeof t[k]==='object')walk(t[k],v);else if(k in t)t[k]=v}};walk(out,src);return out};
   const state=merge(cfg.defaults,saved);
-  const BUILD='20261003-videoaim2';
+  const BUILD='20261003-aimdiag1';
   const params=new URLSearchParams(location.search),hero=params.get('hero')||state.champion||'warrior';
+  const diagnosticEnabled=params.get('diag')==='1';
   const ua=navigator.userAgent||'';
   const embeddedWebView=/(FBAN|FBAV|FB_IAB|MessengerForiOS|Instagram|Line\/|MicroMessenger|; wv\)|\bwv\b|WebView)/i.test(ua);
   if(embeddedWebView||params.get('compat')==='1'){
@@ -115,7 +129,49 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
     return;
   }
   const stage=document.getElementById('touch-stage'),game=document.getElementById('game'),joystick=document.getElementById('joystick'),knob=document.getElementById('knob'),status=document.getElementById('status');
-  stage.dataset.size=state.touch.size;stage.dataset.hand=state.touch.hand;stage.dataset.style=state.touch.style;stage.style.setProperty('--alpha',String(Math.max(.4,Math.min(.9,state.touch.opacity/100))));game.style.filter='brightness('+(state.brightness/100)+')';
+  stage.dataset.size=state.touch.size;stage.dataset.hand=state.touch.hand;stage.dataset.style=state.touch.style;stage.dataset.diagnostic=String(diagnosticEnabled);stage.style.setProperty('--alpha',String(Math.max(.4,Math.min(.9,state.touch.opacity/100))));game.style.filter='brightness('+(state.brightness/100)+')';
+  const diag={
+    build:document.getElementById('diag-build'),armed:document.getElementById('diag-armed'),
+    stick:document.getElementById('diag-stick'),sent:document.getElementById('diag-sent'),
+    received:document.getElementById('diag-received'),hero:document.getElementById('diag-hero'),
+    projectile:document.getElementById('diag-projectile'),result:document.getElementById('diag-result'),
+    values:{stick:null,sent:null,received:null,hero:null,projectile:null}
+  };
+  const fmtVec=v=>v?Number(v.x).toFixed(3)+', '+Number(v.y).toFixed(3)+(v.active===false?' inactive':''):'waiting';
+  const direction=v=>{
+    if(!v)return null;
+    const x=Number(v.x),y=Number(v.y),m=Math.hypot(x,y);
+    return m>.001?{x:x/m,y:y/m}:{x:0,y:0};
+  };
+  const closeVec=(a,b)=>{
+    const ua=direction(a),ub=direction(b);
+    return !!(ua&&ub&&Math.hypot(ua.x-ub.x,ua.y-ub.y)<.08);
+  };
+  function renderDiag(){
+    if(!diagnosticEnabled)return;
+    diag.stick.textContent=fmtVec(diag.values.stick);
+    diag.sent.textContent=fmtVec(diag.values.sent);
+    diag.received.textContent=fmtVec(diag.values.received);
+    diag.hero.textContent=fmtVec(diag.values.hero);
+    if(diag.values.projectile)diag.projectile.textContent=fmtVec({x:diag.values.projectile.shotX,y:diag.values.projectile.shotY,active:true})+' · '+(diag.values.projectile.hero||'');
+    diag.armed.textContent=String(armed);
+    const runtime=window.__evilWizardRuntimeBuild||'waiting';
+    diag.build.textContent='shell:'+BUILD+' runtime:'+runtime;
+    let label='waiting',bad=false;
+    const s=diag.values.stick,r=diag.values.received,h=diag.values.hero;
+    if(runtime!==BUILD){label='BREAK: RUNTIME VERSION';bad=true}
+    else if(s?.active&&diag.values.sent&&!closeVec(s,diag.values.sent)){label='BREAK: BROWSER SEND';bad=true}
+    else if(s?.active&&r&&!closeVec(s,r)){label='BREAK: GODOT RECEIVE';bad=true}
+    else if(s?.active&&h&&!closeVec(s,h)){label='BREAK: HERO AIM';bad=true}
+    else if(s?.active&&h&&closeVec(s,h)){label='STICK → GODOT → HERO OK'}
+    if(diag.values.projectile&&h){
+      const shot={x:diag.values.projectile.aimX,y:diag.values.projectile.aimY};
+      if(!closeVec(h,shot)){label='BREAK: PROJECTILE AIM';bad=true}
+      else if(!bad)label='FULL PIPELINE OK'
+    }
+    diag.result.textContent=label;
+    diag.result.className=bad?'bad':(label.includes('OK')?'ok':'');
+  }
 
   for(const button of document.querySelectorAll('[data-position]')){
     const action=state.touch.map[button.dataset.position];
@@ -131,7 +187,7 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
   function maybeStart(){if(started||!bridgeReady||!landscape())return;configure();started=true;send('start',{hero_class:hero});status.textContent='Opening story — use INTERACT to continue'}
   function press(pointer,action){const key=`${pointer}:${action}`;if(held.has(key))return;held.set(key,action);send('button',{action,pressed:true,pointer:key})}
   function release(pointer,action){const key=`${pointer}:${action}`;if(!held.delete(key))return;send('button',{action,pressed:false,pointer:key})}
-  function clearAll(){for(const[key,action]of held)send('button',{action,pressed:false,pointer:key});held.clear();knob.style.transform='';joystick.classList.remove('active');joystickPointer=null;send('aim',{x:0,y:0,active:false});document.querySelectorAll('.pressed').forEach(b=>b.classList.remove('pressed'));send('reset')}
+  function clearAll(){for(const[key,action]of held)send('button',{action,pressed:false,pointer:key});held.clear();knob.style.transform='';joystick.classList.remove('active');joystickPointer=null;diag.values.stick={x:0,y:0,active:false};diag.values.sent={x:0,y:0,active:false};renderDiag();send('aim',{x:0,y:0,active:false});document.querySelectorAll('.pressed').forEach(b=>b.classList.remove('pressed'));send('reset')}
   const touchCapable=(navigator.maxTouchPoints||0)>0||('ontouchstart' in window);
   function updateStick(clientX,clientY,id){
     const r=joystick.getBoundingClientRect();
@@ -143,7 +199,12 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
     if(dx>.25)active.add('move_right');
     if(dy>.5)active.add('move_down');
     for(const a of['move_left','move_right','move_down'])active.has(a)?press(pointer,a):release(pointer,a);
-    send('aim',{x:dx,y:dy,active:Math.hypot(x,y)>.18,pointer});
+    const aimActive=Math.hypot(x,y)>.18;
+    diag.values.stick={x:dx,y:dy,active:aimActive};
+    renderDiag();
+    send('aim',{x:dx,y:dy,active:aimActive,pointer});
+    if(armed)diag.values.sent={x:dx,y:dy,active:aimActive};
+    renderDiag();
   }
   function startStick(id,clientX,clientY){
     if(joystickPointer!==null)return false;
@@ -234,13 +295,24 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
         return;
       }
       window.__evilWizardRuntimeBuild=e.data.build;
-      armed=true;bridgeReady=true;
+      armed=true;bridgeReady=true;renderDiag();
       status.textContent=landscape()?'Game ready — starting…':'Game ready — rotate sideways';
       maybeStart();
       return;
     }
+    if(e.data.type==='evil-wizard/aim-received'){
+      window.__evilWizardAimReceived=e.data;
+      diag.values.received=e.data;renderDiag();
+      return;
+    }
     if(e.data.type==='evil-wizard/aim-state'){
       window.__evilWizardAimState=e.data;
+      diag.values.hero=e.data;renderDiag();
+      return;
+    }
+    if(e.data.type==='evil-wizard/projectile-state'){
+      window.__evilWizardProjectileState=e.data;
+      diag.values.projectile=e.data;renderDiag();
       return;
     }
     if(e.data.type==='evil-wizard/state'&&e.data.playing===true){

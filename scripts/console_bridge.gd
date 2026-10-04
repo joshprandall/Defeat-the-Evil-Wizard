@@ -4,7 +4,7 @@ extends Node
 # The console shell and exported game are hosted together on the same origin.
 # Only explicit messages from our own parent frame are forwarded as Input Map actions.
 const CHANNEL := "evil-wizard-console/v1"
-const BUILD_ID := "20261003-videoaim2"
+const BUILD_ID := "20261003-aimdiag1"
 const ALLOWED := ["move_left", "move_right", "move_down", "jump", "attack", "heavy_attack", "dash", "interact", "ability_one", "ability_two", "ultimate"]
 const REMAPPABLE := ["jump", "dash", "attack", "heavy_attack", "interact", "ability_one", "ability_two", "ultimate", "pause"]
 const ALLOWED_KEYS := [32,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,4194305,4194311,4194312,4194313,4194314,4194325]
@@ -193,6 +193,12 @@ func _apply_aim(payload: Dictionary) -> void:
     )
     if not bool(payload.get("active", true)):
         direction = Vector2.ZERO
+    if OS.has_feature("web") and _console_active:
+        var received_active_literal: String = "true" if direction.length() > 0.18 else "false"
+        JavaScriptBridge.eval(
+            "window.parent.postMessage({type:'evil-wizard/aim-received',build:'%s',x:%s,y:%s,active:%s}, window.location.origin)"
+            % [BUILD_ID, str(direction.x), str(direction.y), received_active_literal]
+        )
     hero.set_touch_aim(direction)
     if OS.has_feature("web") and _console_active:
         var active_literal: String = "true" if hero.touch_aim_active else "false"

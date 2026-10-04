@@ -53,7 +53,7 @@ button,select,input{font:inherit}button{cursor:pointer;color:inherit}
 @media(max-width:780px){#menu{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}.menu-rail{border-right:0;border-bottom:1px solid #2d3948;padding:12px 14px;gap:10px}.logo{font-size:25px}.logo small,.device{display:none}.nav{grid-template-columns:repeat(4,1fr);gap:4px}.nav button{text-align:center;min-height:40px;padding:6px;font-size:11px}.menu-content{padding:14px}.grid,.how-grid{grid-template-columns:1fr}.mapping-grid{grid-template-columns:1fr}.screen h1{font-size:36px}.touch-settings{grid-template-columns:1fr 1fr}}
 @media(max-height:500px) and (orientation:landscape){#menu{grid-template-columns:190px 1fr}.menu-rail{border-right:1px solid #2d3948;border-bottom:0;padding:12px}.nav{grid-template-columns:1fr}.menu-content{padding:12px 18px}.screen h1{font-size:32px}.lede{margin:7px 0 12px}.panel{padding:11px}.field{margin-bottom:7px}}
 </style>
-<script src="./console-champions.js?v=20261003-videoaim2"></script>
+<script src="./console-champions.js?v=20261003-aimdiag1"></script>
 </head>
 <body>
 <div id="game-shell" aria-hidden="true"><iframe id="game" title="Defeat the Evil Wizard" src="about:blank" allow="fullscreen; gamepad" allowfullscreen tabindex="0"></iframe></div>
@@ -142,7 +142,7 @@ button,select,input{font:inherit}button{cursor:pointer;color:inherit}
 
   const menu=document.getElementById('menu'),frame=document.getElementById('game'),status=document.getElementById('status'),device=document.getElementById('device');
   const champion=document.getElementById('champion'),mode=document.getElementById('input-mode');
-  const BUILD='20261003-videoaim2';
+  const BUILD='20261003-aimdiag1';
   const params=new URLSearchParams(location.search);
   const ua=navigator.userAgent||'';
   const mobileUA=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(ua);
@@ -209,6 +209,7 @@ button,select,input{font:inherit}button{cursor:pointer;color:inherit}
       camera_shake:state.cameraShake?'1':'0',master_volume:String(state.masterVolume),
       brightness:String(state.brightness),build:BUILD
     });
+    if(params.get('diag')==='1')q.set('diag','1');
     return './index.html?'+q.toString();
   }
   async function requestFullscreen(){if(!state.fullscreen)return;try{const root=document.documentElement;if(!document.fullscreenElement&&root.requestFullscreen)await root.requestFullscreen({navigationUI:'hide'});else if(!document.webkitFullscreenElement&&root.webkitRequestFullscreen)root.webkitRequestFullscreen()}catch(_){}}
@@ -219,6 +220,7 @@ button,select,input{font:inherit}button{cursor:pointer;color:inherit}
     if(compatibilityMode){location.replace(directLaunchUrl());return}
     if(m==='touch'){
       const q=new URLSearchParams({hero:state.champion,build:BUILD});
+      if(params.get('diag')==='1')q.set('diag','1');
       location.href='./console.html?'+q.toString();
       return;
     }
