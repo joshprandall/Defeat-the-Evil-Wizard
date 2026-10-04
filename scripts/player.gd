@@ -2056,6 +2056,11 @@ func _spawn_bolt(damage: float, speed: float, angle_offset: float, color: Color,
     var base: Vector2 = aim_direction if aim_direction.length()>0.1 else Vector2(facing,0.0)
     var direction: Vector2 = base.rotated(angle_offset)
     var origin: Vector2 = global_position+Vector2(0,-38)+base*24.0
+    if OS.has_feature("web") and hero_class in ["archer","ranger","cleric","bard","druid","sorcerer","warlock","wizard"]:
+        JavaScriptBridge.eval(
+            "if(window.parent!==window){window.parent.postMessage({type:'evil-wizard/projectile-state',build:'20261003-aimdiag1',hero:'%s',aimX:%s,aimY:%s,shotX:%s,shotY:%s},window.location.origin)}"
+            % [hero_class, str(base.x), str(base.y), str(direction.x), str(direction.y)]
+        )
     _spawn_custom_bolt(origin,direction,speed,damage,stun,color,size_scale,pierces)
 
 func _spawn_custom_bolt(at: Vector2, direction: Vector2, speed: float, damage: float, stun: float, color: Color, size_scale: float = 1.0, pierces: int = 0) -> void:
