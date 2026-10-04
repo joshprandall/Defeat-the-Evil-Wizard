@@ -758,7 +758,10 @@ func _update_aim_direction() -> void:
     var pads: Array[int] = Input.get_connected_joypads()
     if not pads.is_empty():
         var device: int = pads[0]
-        stick = Vector2(Input.get_joy_axis(device,2),Input.get_joy_axis(device,3))
+        # The left control stick is the single movement + ranged-aim control.
+        # This keeps controller and touch behavior identical: point the stick
+        # where you want to move/aim, then fire with the attack button.
+        stick = Vector2(Input.get_joy_axis(device,0),Input.get_joy_axis(device,1))
     if stick.length() > 0.32:
         aim_direction = stick.normalized()
     elif touch_aim_active:
