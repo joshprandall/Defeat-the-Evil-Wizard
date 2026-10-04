@@ -58,6 +58,8 @@ func _verify() -> void:
     if hero != null:
         hero.reset_at(Vector2(180,560))
         hero.configure_class("warrior")
+        hero.aim_direction = Vector2.RIGHT
+        hero.facing = 1.0
         hero.console_attack_queue = 0
         var enemy: RealmEnemy = RealmEnemy.new().setup("crawler",Vector2(236,560),hero)
         enemy.max_health = 50.0
