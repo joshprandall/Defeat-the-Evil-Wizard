@@ -90,6 +90,7 @@ try {
   assert.match(layout.filter,/brightness\(1\.15\)/,'Brightness setting must apply to touch game');
 
   await waitForGodotBridge(phone);
+  await phone.waitForFunction(()=>window.__evilWizardRuntimeBuild==='20261003-videoaim2',null,{timeout:10000});
   await phone.waitForFunction(()=>/Opening story|INTERACT/.test(document.getElementById('status')?.textContent||''),null,{timeout:10000});
   await phone.evaluate(()=>{
     const frame=document.getElementById('game').contentWindow;
@@ -106,11 +107,18 @@ try {
   const first={x:j.x+Math.round(joy.width*.22),y:j.y-Math.round(joy.height*.18),id:1},second={x:a.x,y:a.y,id:2};
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first]});
   await phone.waitForFunction(()=>window.__audit.some(m=>m.kind==='aim'&&m.active===true&&m.x>.2&&m.y<-.1)&&window.__audit.some(m=>m.action==='move_right'&&m.pressed));
+  await phone.waitForFunction(()=>window.__evilWizardAimState?.build==='20261003-videoaim2'&&window.__evilWizardAimState.active===true&&window.__evilWizardAimState.x>.2&&window.__evilWizardAimState.y<-.1);
+  const opposite={x:j.x-Math.round(joy.width*.22),y:j.y+Math.round(joy.height*.18),id:1};
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[opposite]});
+  await phone.waitForFunction(()=>window.__evilWizardAimState?.active===true&&window.__evilWizardAimState.x<-.2&&window.__evilWizardAimState.y>.1);
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[first]});
+  await phone.waitForFunction(()=>window.__evilWizardAimState?.active===true&&window.__evilWizardAimState.x>.2&&window.__evilWizardAimState.y<-.1);
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first,second]});
   await phone.waitForFunction(()=>window.__audit.some(m=>m.action==='move_right'&&m.pressed)&&window.__audit.some(m=>m.action==='attack'&&m.pressed));
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[first]});
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   await phone.waitForFunction(()=>window.__audit.some(m=>m.kind==='aim'&&m.active===false));
+  await phone.waitForFunction(()=>window.__evilWizardAimState?.active===false);
   assert.equal(await phone.evaluate(()=>window.visualViewport?.scale??1),1,'Simultaneous touch must not zoom the browser');
   await phone.screenshot({path:'build/handheld-console-preview.png'});
   assert.equal(phoneErrors.length,0,`Phone browser errors: ${phoneErrors.join('; ')}`);

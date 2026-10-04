@@ -18,8 +18,8 @@ jobs:
       - name: Check out game
         uses: actions/checkout@v4
 
-      - name: Validate OSU deployment tool
-        run: python3 -m py_compile tools/deploy_controls_osu.py
+      - name: Validate deployment and Web-versioning tools
+        run: python3 -m py_compile tools/deploy_controls_osu.py tools/version_web_export.py
 
       - name: Verify game menu, remapping, and floating controller shell
         shell: bash
@@ -49,8 +49,10 @@ jobs:
           for item in ('keyOptions', 'gamepadOptions', 'PlayStation controller', 'Xbox / standard gamepad',
                        'touch:', 'keyboard:', 'gamepad:', 'masterVolume', 'cameraShake'):
               assert item in shared, f'Missing shared control/settings model: {item}'
-          for item in ('== "settings"', '== "controls"', '== "aim"', '_apply_aim', '_replace_keyboard_event', '_replace_gamepad_event', 'AudioServer'):
+          for item in ('== "settings"', '== "controls"', '== "aim"', '_apply_aim', 'BUILD_ID := "20261003-videoaim2"', 'evil-wizard/aim-state', '_replace_keyboard_event', '_replace_gamepad_event', 'AudioServer'):
               assert item in bridge, f'Missing Godot remap/settings bridge: {item}'
+          assert "const BUILD='20261003-videoaim2'" in touch, 'Floating controller build id is stale'
+          assert '20261003-videoaim2' in launcher, 'Launcher build id is stale'
           launcher_scripts = re.findall(r'<script>(.*?)</script>', launcher, re.DOTALL)
           touch_scripts = re.findall(r'<script>(.*?)</script>', touch, re.DOTALL)
           assert len(launcher_scripts) == 1, 'Expected one inline launcher controller'
@@ -128,13 +130,16 @@ jobs:
           set -euo pipefail
           mkdir -p build/web
           "$GODOT_BIN" --headless --path . --export-release Web build/web/index.html
+          python3 tools/version_web_export.py --root build/web --build-id 20261003-videoaim2
           cp web/console.html build/web/console.html
           cp web/play.html build/web/play.html
           cp web/console-champions.js build/web/console-champions.js
           cp web/.htaccess build/web/.htaccess
-          for file in index.html index.js index.wasm index.pck play.html console.html console-champions.js .htaccess; do
+          for file in index.html index.js index.wasm index.pck index-20261003-videoaim2.pck play.html console.html console-champions.js .htaccess; do
             test -s "build/web/$file" || { echo "Missing or empty: build/web/$file"; exit 1; }
           done
+          grep -Fq '"mainPack":"index-20261003-videoaim2.pck"' build/web/index.html
+          grep -Fq 'index.js?v=20261003-videoaim2' build/web/index.html
 
       - name: Upload downloadable browser build
         uses: actions/upload-artifact@v4

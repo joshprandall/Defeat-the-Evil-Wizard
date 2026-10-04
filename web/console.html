@@ -68,7 +68,7 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
 </head>
 <body>
 <main class="touch-stage" id="touch-stage" data-evil-wizard-console data-size="compact" data-hand="right" data-style="xbox">
-  <iframe id="game" title="Defeat the Evil Wizard game" src="./index.html?build=20261003-leftstickaim1" allow="gamepad; fullscreen" allowfullscreen tabindex="0"></iframe>
+  <iframe id="game" title="Defeat the Evil Wizard game" src="./index.html?build=20261003-videoaim2" allow="gamepad; fullscreen" allowfullscreen tabindex="0"></iframe>
   <div id="status" role="status" aria-live="polite">Loading game…</div>
   <div class="controls" aria-label="Floating controller">
     <section class="top-left" aria-label="Left shoulder controls">
@@ -94,7 +94,7 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
   </div>
 </main>
 <div class="orientation-gate" role="status" aria-live="polite"><div class="orientation-card"><span class="orientation-icon" aria-hidden="true">↻</span><h1>Turn your screen sideways</h1><p>Phone and tablet play uses landscape so the game stays visible behind the floating controls. Rotate your device to continue. <strong>Your saved control layout will load automatically.</strong></p></div></div>
-<script src="./console-champions.js?v=20261003-leftstickaim1"></script>
+<script src="./console-champions.js?v=20261003-videoaim2"></script>
 <script>
 'use strict';
 (() => {
@@ -102,7 +102,7 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
   let saved={};try{saved=JSON.parse(localStorage.getItem('evil-wizard-launch-v3')||'{}')}catch(_){}
   const clone=o=>JSON.parse(JSON.stringify(o)),merge=(base,src)=>{const out=clone(base);const walk=(t,s)=>{if(!s||typeof s!=='object')return;for(const[k,v]of Object.entries(s)){if(v&&typeof v==='object'&&!Array.isArray(v)&&t[k]&&typeof t[k]==='object')walk(t[k],v);else if(k in t)t[k]=v}};walk(out,src);return out};
   const state=merge(cfg.defaults,saved);
-  const BUILD='20261003-leftstickaim1';
+  const BUILD='20261003-videoaim2';
   const params=new URLSearchParams(location.search),hero=params.get('hero')||state.champion||'warrior';
   const ua=navigator.userAgent||'';
   const embeddedWebView=/(FBAN|FBAV|FB_IAB|MessengerForiOS|Instagram|Line\/|MicroMessenger|; wv\)|\bwv\b|WebView)/i.test(ua);
@@ -124,7 +124,7 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
     const legend=document.createElement('span');legend.className='legend';legend.textContent=Object.fromEntries(cfg.actions)[action]||action;button.append(legend);
   }
 
-  const held=new Map();let joystickPointer=null,armed=false,started=false,bridgeReady=false;
+  const held=new Map();let joystickPointer=null,armed=false,started=false,bridgeReady=false,runtimeReloaded=false;
   const landscape=()=>matchMedia('(orientation:landscape)').matches;
   const send=(kind,extra={})=>{if(armed&&game.contentWindow)game.contentWindow.postMessage({channel,kind,...extra},location.origin)};
   function configure(){send('controls',{keyboard:state.keyboard,gamepad:state.gamepad});send('settings',{difficulty:state.difficulty,camera_shake:state.cameraShake,master_volume:state.masterVolume})}
@@ -213,7 +213,43 @@ body{font:700 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;color:#fff}
   window.addEventListener('pointerup',endPointer);
   window.addEventListener('pointercancel',endPointer);
   for(const button of document.querySelectorAll('button[data-action]')){const action=button.dataset.action;button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture(e.pointerId);button.classList.add('pressed');press(`button-${e.pointerId}`,action);if(action==='pause')release(`button-${e.pointerId}`,action);if(state.fullscreen){try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})}catch(_){}}});const stop=e=>{release(`button-${e.pointerId}`,action);button.classList.remove('pressed')};['pointerup','pointercancel','lostpointercapture'].forEach(t=>button.addEventListener(t,stop));button.addEventListener('contextmenu',e=>e.preventDefault())}
-  window.addEventListener('message',e=>{if(e.source!==game.contentWindow||e.origin!==location.origin||!e.data)return;if(e.data.type==='evil-wizard/hello'){game.contentWindow.postMessage({channel,kind:'init'},location.origin);return}if(e.data.type==='evil-wizard/ready'){armed=true;bridgeReady=true;status.textContent=landscape()?'Game ready — starting…':'Game ready — rotate sideways';maybeStart();return}if(e.data.type==='evil-wizard/state'&&e.data.playing===true){status.classList.add('ready');game.focus()}else if(e.data.type==='evil-wizard/state'&&started){status.textContent='Opening story — use INTERACT to continue';status.classList.remove('ready')}});
+  window.addEventListener('message',e=>{
+    if(e.source!==game.contentWindow||e.origin!==location.origin||!e.data)return;
+    if(e.data.type==='evil-wizard/hello'){
+      game.contentWindow.postMessage({channel,kind:'init'},location.origin);
+      return;
+    }
+    if(e.data.type==='evil-wizard/ready'){
+      if(e.data.build!==BUILD){
+        if(!runtimeReloaded){
+          runtimeReloaded=true;
+          armed=false;bridgeReady=false;started=false;
+          status.classList.remove('ready');
+          status.textContent='Refreshing game update…';
+          game.src='./index.html?build='+encodeURIComponent(BUILD)+'&runtime_refresh='+Date.now();
+          return;
+        }
+        status.classList.remove('ready');
+        status.textContent='Game update failed — reload this page';
+        return;
+      }
+      window.__evilWizardRuntimeBuild=e.data.build;
+      armed=true;bridgeReady=true;
+      status.textContent=landscape()?'Game ready — starting…':'Game ready — rotate sideways';
+      maybeStart();
+      return;
+    }
+    if(e.data.type==='evil-wizard/aim-state'){
+      window.__evilWizardAimState=e.data;
+      return;
+    }
+    if(e.data.type==='evil-wizard/state'&&e.data.playing===true){
+      status.classList.add('ready');game.focus();
+    }else if(e.data.type==='evil-wizard/state'&&started){
+      status.textContent='Opening story — use INTERACT to continue';
+      status.classList.remove('ready');
+    }
+  });
   const orient=()=>{clearAll();if(landscape()){status.classList.remove('ready');status.textContent=bridgeReady?'Game ready — starting…':'Loading game…';maybeStart()}};matchMedia('(orientation:landscape)').addEventListener?.('change',orient);window.addEventListener('orientationchange',orient);
   for(const t of['gesturestart','gesturechange','gestureend'])document.addEventListener(t,e=>e.preventDefault(),{passive:false});document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});window.addEventListener('blur',clearAll);document.addEventListener('visibilitychange',()=>{if(document.hidden)clearAll()});
 })();

@@ -30,6 +30,20 @@ func _verify() -> void:
     bridge.call("_receive_payload", {"channel": CHANNEL, "kind": "aim", "x": -0.6, "y": -0.8, "active": true})
     _check(hero != null and hero.touch_aim_active, "browser aim payload activates Hero touch aim")
     _check(hero != null and hero.aim_direction.x < -0.5 and hero.aim_direction.y < -0.7, "browser aim payload reaches ranged direction")
+    if hero != null:
+        hero.call("_archer_light_attack")
+        var fired_bolt: HeroBolt = null
+        for child: Node in current_scene.get_children():
+            if child is HeroBolt:
+                fired_bolt = child as HeroBolt
+        _check(fired_bolt != null, "Archer browser aim spawns a projectile")
+        if fired_bolt != null:
+            var projectile_direction: Vector2 = fired_bolt.velocity.normalized()
+            _check(projectile_direction.distance_to(hero.aim_direction.normalized()) < 0.01, "Archer projectile follows applied left-stick aim")
+            fired_bolt.queue_free()
+        hero.attack_lock = 0.0
+    bridge.call("_receive_payload", {"channel": CHANNEL, "kind": "aim", "x": 0.8, "y": 0.35, "active": true})
+    _check(hero != null and hero.aim_direction.x > 0.7 and hero.aim_direction.y > 0.2, "browser aim changes dynamically instead of freezing on the previous direction")
     _message(bridge, "attack", true, "attack-finger")
     _check(Input.is_action_pressed("move_right"), "independent stick and dpad movement")
     _check(Input.is_action_pressed("jump"), "jump while moving")
