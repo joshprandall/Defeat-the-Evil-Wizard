@@ -12,6 +12,8 @@ const ACTIONS := ["jump", "attack", "heavy_attack", "dash", "interact", "ability
 
 var joystick_finger: int = -1
 var joystick_axis: Vector2 = Vector2.ZERO
+var aim_finger: int = -1
+var aim_axis: Vector2 = Vector2.ZERO
 var finger_actions: Dictionary = {}
 var button_holds: Dictionary = {}
 var stick_holds: Dictionary = {}
@@ -80,6 +82,11 @@ func _joystick_center() -> Vector2:
     var factor: float = _scale()
     return Vector2(155.0 * factor, viewport_size.y - 135.0 * factor)
 
+func _aim_center() -> Vector2:
+    var viewport_size: Vector2 = get_viewport_rect().size
+    var factor: float = _scale()
+    return Vector2(viewport_size.x - 525.0 * factor, viewport_size.y - 112.0 * factor)
+
 func _buttons() -> Dictionary:
     var viewport_size: Vector2 = get_viewport_rect().size
     var factor: float = _scale()
@@ -122,6 +129,9 @@ func _input(event: InputEvent) -> void:
         if drag.index == joystick_finger:
             _update_joystick(drag.position)
             get_viewport().set_input_as_handled()
+        elif drag.index == aim_finger:
+            _update_aim(drag.position)
+            get_viewport().set_input_as_handled()
         elif finger_actions.has(drag.index):
             get_viewport().set_input_as_handled()
 
@@ -142,11 +152,20 @@ func _touch_down(finger: int, at: Vector2) -> void:
                 Input.action_press(action)
             get_viewport().set_input_as_handled()
             return
+    if aim_finger == -1 and at.distance_to(_aim_center()) < 92.0 * _scale():
+        aim_finger = finger
+        _update_aim(at)
+        get_viewport().set_input_as_handled()
+        return
 
 func _touch_up(finger: int) -> void:
     if finger == joystick_finger:
         joystick_finger = -1
         _apply_stick(Vector2.ZERO)
+        get_viewport().set_input_as_handled()
+    elif finger == aim_finger:
+        aim_finger = -1
+        _apply_aim(Vector2.ZERO)
         get_viewport().set_input_as_handled()
     elif finger_actions.has(finger):
         var action: String = str(finger_actions[finger])
@@ -159,6 +178,18 @@ func _touch_up(finger: int) -> void:
 
 func _update_joystick(at: Vector2) -> void:
     _apply_stick((at - _joystick_center()) / (76.0 * _scale()))
+
+func _update_aim(at: Vector2) -> void:
+    _apply_aim((at - _aim_center()) / (62.0 * _scale()))
+
+func _apply_aim(raw: Vector2) -> void:
+    aim_axis = raw.limit_length(1.0)
+    var scene: Node = get_tree().current_scene
+    if scene == null:
+        return
+    var hero: Hero = scene.get("player") as Hero
+    if hero != null:
+        hero.set_touch_aim(aim_axis)
 
 func _apply_stick(raw: Vector2) -> void:
     joystick_axis = raw.limit_length(1.0)
@@ -176,7 +207,9 @@ func _stick_action(action: String, pressed: bool, strength: float) -> void:
 
 func _release_all() -> void:
     _apply_stick(Vector2.ZERO)
+    _apply_aim(Vector2.ZERO)
     joystick_finger = -1
+    aim_finger = -1
     for action: String in button_holds.keys():
         Input.action_release(action)
     button_holds.clear()
@@ -204,6 +237,12 @@ func _draw() -> void:
     draw_arc(stick, 89.0 * factor, 0.0, TAU, 48, RIM, 3.0 * factor, true)
     draw_circle(stick + joystick_axis * 60.0 * factor, 34.0 * factor, HIGHLIGHT)
     draw_arc(stick + joystick_axis * 60.0 * factor, 34.0 * factor, 0.0, TAU, 32, INK, 2.0 * factor, true)
+    var aim: Vector2 = _aim_center()
+    draw_circle(aim, 72.0 * factor, FILL)
+    draw_arc(aim, 72.0 * factor, 0.0, TAU, 40, RIM, 2.5 * factor, true)
+    draw_circle(aim + aim_axis * 45.0 * factor, 27.0 * factor, HIGHLIGHT)
+    draw_arc(aim + aim_axis * 45.0 * factor, 27.0 * factor, 0.0, TAU, 28, INK, 2.0 * factor, true)
+    draw_string(font, aim + Vector2(-24.0, -82.0) * factor, "AIM", HORIZONTAL_ALIGNMENT_CENTER, 48.0 * factor, maxi(10, int(15.0 * factor)), INK)
     var positions: Dictionary = _buttons()
     for action: String in ACTIONS:
         var p: Vector2 = positions[action]
