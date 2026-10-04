@@ -26,6 +26,10 @@ func _verify() -> void:
     _check(hero != null, "Movement Lab hero exists")
     if hero != null:
         hero.console_attack_queue = 0
+        hero.configure_class("archer")
+    bridge.call("_receive_payload", {"channel": CHANNEL, "kind": "aim", "x": -0.6, "y": -0.8, "active": true})
+    _check(hero != null and hero.touch_aim_active, "browser aim payload activates Hero touch aim")
+    _check(hero != null and hero.aim_direction.x < -0.5 and hero.aim_direction.y < -0.7, "browser aim payload reaches ranged direction")
     _message(bridge, "attack", true, "attack-finger")
     _check(Input.is_action_pressed("move_right"), "independent stick and dpad movement")
     _check(Input.is_action_pressed("jump"), "jump while moving")
@@ -44,6 +48,7 @@ func _verify() -> void:
     _message(bridge, "attack", false, "attack-2")
     bridge.call("_receive_payload", {"channel": CHANNEL, "kind": "reset"})
     _check(hero != null and hero.console_attack_queue == 1, "reset does not erase an already queued attack tap")
+    _check(hero != null and not hero.touch_aim_active, "reset releases browser aim without erasing the last direction")
     _message(bridge, "not_a_game_action", true, "bad")
     _check(not InputMap.has_action("not_a_game_action"), "unknown action cannot be injected")
 
@@ -53,6 +58,8 @@ func _verify() -> void:
     if hero != null:
         hero.reset_at(Vector2(180,560))
         hero.configure_class("warrior")
+        hero.aim_direction = Vector2.RIGHT
+        hero.facing = 1.0
         hero.console_attack_queue = 0
         var enemy: RealmEnemy = RealmEnemy.new().setup("crawler",Vector2(236,560),hero)
         enemy.max_health = 50.0

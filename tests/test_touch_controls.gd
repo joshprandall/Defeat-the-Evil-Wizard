@@ -40,21 +40,31 @@ func _verify() -> void:
         return
 
     var stick_center: Vector2 = controls.call("_joystick_center")
+    var aim_center: Vector2 = controls.call("_aim_center")
     var buttons: Dictionary = controls.call("_buttons")
+    var hero: Hero = lab.get("player") as Hero
+    _check(hero != null, "Movement Lab hero exists for touch aim")
+    if hero != null:
+        hero.configure_class("archer")
     controls.call("_touch_down", 1, stick_center + Vector2(58.0, 0.0))
     _check(Input.is_action_pressed("move_right"), "right movement from left thumb")
     controls.call("_touch_down", 2, buttons["jump"])
     controls.call("_touch_down", 3, buttons["attack"])
+    controls.call("_touch_down", 4, aim_center + Vector2(36.0, -36.0))
     _check(Input.is_action_pressed("move_right"), "movement retained during multitouch")
     _check(Input.is_action_pressed("jump"), "jump from second finger")
     _check(Input.is_action_pressed("attack"), "attack from third finger")
+    _check(hero != null and hero.touch_aim_active, "right thumb activates touch aim")
+    _check(hero != null and hero.aim_direction.x > 0.35 and hero.aim_direction.y < -0.35, "touch aim updates ranged direction")
     controls.call("_touch_up", 2)
     _check(not Input.is_action_pressed("jump"), "jump released independently")
     _check(Input.is_action_pressed("attack"), "attack remains held")
     controls.call("_touch_up", 3)
+    controls.call("_touch_up", 4)
     controls.call("_touch_up", 1)
     _check(not Input.is_action_pressed("attack"), "attack released")
     _check(not Input.is_action_pressed("move_right"), "movement released")
+    _check(hero != null and not hero.touch_aim_active, "touch aim releases independently")
     controls.call("_release_all")
     if failures > 0:
         printerr("%d input checks failed" % failures)

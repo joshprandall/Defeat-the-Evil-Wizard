@@ -84,6 +84,8 @@ var inner_peace_time: float = 0.0
 var starting_resource_floor: float = 0.0
 var ranger_shot_count: int = 0
 var aim_direction: Vector2 = Vector2.RIGHT
+var touch_aim_direction: Vector2 = Vector2.ZERO
+var touch_aim_active: bool = false
 var mouse_light_down: bool = false
 var mouse_heavy_down: bool = false
 var crouching: bool = false
@@ -367,6 +369,21 @@ func queue_console_attack() -> void:
     if controls_locked or health <= 0.0:
         return
     console_attack_queue = mini(console_attack_queue + 1, 3)
+
+func set_touch_aim(direction: Vector2) -> void:
+    # Touch/browser controls cannot expose a native Godot right-stick axis.
+    # Feed their normalized aim vector directly into the same projectile path
+    # used by mouse and physical controller aiming.
+    if direction.length() > 0.18:
+        touch_aim_direction = direction.normalized()
+        touch_aim_active = true
+        aim_direction = touch_aim_direction
+        if absf(aim_direction.x) > 0.18:
+            facing = signf(aim_direction.x)
+    else:
+        touch_aim_direction = Vector2.ZERO
+        touch_aim_active = false
+    queue_redraw()
 
 func _perform_light_attack() -> void:
     if hero_class == "mage":
@@ -744,11 +761,17 @@ func _update_aim_direction() -> void:
         stick = Vector2(Input.get_joy_axis(device,2),Input.get_joy_axis(device,3))
     if stick.length() > 0.32:
         aim_direction = stick.normalized()
+    elif touch_aim_active:
+        aim_direction = touch_aim_direction
     else:
+        # A touch-only device has no meaningful mouse position once touch-to-mouse
+        # emulation is disabled. Do not let that stale coordinate overwrite the
+        # last deliberate touch aim; desktop mouse aiming remains continuous.
+        var mouse_aim_allowed: bool = not DisplayServer.is_touchscreen_available() or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
         var mouse_delta: Vector2 = get_global_mouse_position()-(global_position+Vector2(0,-34))
-        if mouse_delta.length() > 20.0:
+        if mouse_aim_allowed and mouse_delta.length() > 20.0:
             aim_direction = mouse_delta.normalized()
-    if absf(aim_direction.x) > 0.18 and (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) or stick.length()>0.32):
+    if absf(aim_direction.x) > 0.18 and (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) or stick.length()>0.32 or touch_aim_active):
         facing = signf(aim_direction.x)
 
 func _set_crouching(value: bool) -> void:
