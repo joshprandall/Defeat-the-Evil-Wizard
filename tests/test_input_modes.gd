@@ -36,7 +36,7 @@ func _run() -> void:
     _check(_has_button("pause",6),"Xbox Menu/Start pauses")
 
     var player_source := FileAccess.get_file_as_string("res://scripts/player.gd")
-    _check("Input.get_joy_axis(device,2)" in player_source and "Input.get_joy_axis(device,3)" in player_source,"right stick aiming is implemented")
+    _check("Input.get_joy_axis(device,0)" in player_source and "Input.get_joy_axis(device,1)" in player_source,"left stick aiming is implemented")
 
     profile.queue_free()
     game.queue_free()

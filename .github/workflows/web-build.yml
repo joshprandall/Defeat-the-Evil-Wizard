@@ -37,12 +37,14 @@ jobs:
                        'id="difficulty"', 'id="master-volume"', 'id="brightness"', 'id="camera-shake"',
                        'Reset controls to defaults', 'Reset settings to defaults'):
               assert item in launcher, f'Missing game-menu feature: {item}'
-          for item in ('data-evil-wizard-console', 'id="joystick"', 'id="aimstick"', 'id="game"', 'src="./index.html?build=',
-                       'orientation-gate', 'Turn your screen sideways', 'left-zone', 'aim-zone', 'right-zone',
+          for item in ('data-evil-wizard-console', 'id="joystick"', 'id="game"', 'src="./index.html?build=',
+                       'orientation-gate', 'Turn your screen sideways', 'left-zone', 'right-zone',
                        'top-left', 'top-right', 'data-position="south"', 'data-position="north"',
                        'xbox-label', 'ps-label', 'embeddedWebView', 'ew_launch'):
               assert item in touch, f'Missing floating-controller feature: {item}'
           assert 'class="dpad"' not in touch, 'Virtual D-pad must not return on phone/tablet controls'
+          assert 'id="aimstick"' not in touch and 'aim-zone' not in touch, 'Separate aim stick must not return; left stick owns aim'
+          assert "send('aim',{x:dx,y:dy" in touch, 'Left joystick must forward its vector to ranged aim'
           assert '--control:62px' in touch and '--joy:128px' in touch, 'Large default touch control sizing is missing'
           for item in ('keyOptions', 'gamepadOptions', 'PlayStation controller', 'Xbox / standard gamepad',
                        'touch:', 'keyboard:', 'gamepad:', 'masterVolume', 'cameraShake'):

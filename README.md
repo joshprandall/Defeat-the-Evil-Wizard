@@ -642,7 +642,7 @@ All fifteen original champion identities are playable: Warrior, Mage, Rogue, Pal
 
 ### Directional combat and aiming
 
-Combat now uses an independent aim vector. Mouse position or the controller right stick can direct ranged attacks and melee hit volumes through 360 degrees. The existing J/K keyboard attacks remain available; left/right mouse buttons provide light/heavy attacks.
+Combat now uses an aim vector shared with the primary control direction. Mouse position can direct ranged attacks on desktop, while the controller left stick handles both movement and ranged aiming through 360 degrees. The existing J/K keyboard attacks remain available; left/right mouse buttons provide light/heavy attacks.
 
 ### Movement completion
 

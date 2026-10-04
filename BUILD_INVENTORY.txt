@@ -55,7 +55,7 @@ v1.4.2 additions: safe NPC-dialogue world freeze, enemy/boss/projectile/hazard f
 v2.0 COMPLETE ROUGH DRAFT:
 - 15/15 playable classes
 - Bard, Druid, Sorcerer, Warlock, Wizard complete kits
-- 360-degree mouse/right-stick aim
+- 360-degree mouse/left-stick aim
 - mouse light/heavy attack
 - directional melee and projectile attacks
 - crouch/squat with smaller collision capsule

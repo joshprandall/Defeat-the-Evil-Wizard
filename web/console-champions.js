@@ -61,10 +61,10 @@
   };
 
   const guides = {
-    touch:'Phone / Tablet: use the left joystick for movement and the smaller right AIM stick to point ranged attacks and spells in any direction. Pull the movement stick downward to crouch. There is no virtual D-pad. The face-button diamond mirrors a gamepad, shoulders and triggers sit along the top edges, and the game remains visible underneath. Every virtual action button can be reassigned in Controls.',
+    touch:'Phone / Tablet: the left joystick controls both movement and ranged aim. Point it in the direction you want to move or fire; pull it downward to crouch. There is no second aim stick or virtual D-pad. The face-button diamond mirrors a gamepad, shoulders and triggers sit along the top edges, and the game remains visible underneath. Every virtual action button can be reassigned in Controls.',
     keyboard:'Keyboard / mouse: A / D or ← / → move · S / Q crouch. The action keys below are remappable. Left mouse always performs Attack and right mouse performs Heavy Attack.',
-    xbox:'Xbox / standard gamepad: left stick or D-pad moves, down crouches, right stick aims. Every action button can be reassigned in Controls.',
-    playstation:'PlayStation controller: left stick or D-pad moves, down crouches, right stick aims. Cross/Circle/Square/Triangle, shoulders and triggers can be reassigned in Controls.'
+    xbox:'Xbox / standard gamepad: the left stick moves and aims ranged attacks; down crouches. Every action button can be reassigned in Controls.',
+    playstation:'PlayStation controller: the left stick moves and aims ranged attacks; down crouches. Cross/Circle/Square/Triangle, shoulders and triggers can be reassigned in Controls.'
   };
 
   window.EvilWizardSetup = {champions,actions,keyOptions,gamepadOptions,defaults,guides};
