@@ -136,6 +136,9 @@ func _receive_payload(payload: Dictionary) -> void:
     if str(payload.get("kind", "")) == "start":
         _start_champion(str(payload.get("hero_class", "")))
         return
+    if str(payload.get("kind", "")) == "aim":
+        _apply_aim(payload)
+        return
     if str(payload.get("kind", "")) != "button":
         return
     var action: String = str(payload.get("action", ""))
@@ -174,6 +177,21 @@ func _receive_payload(payload: Dictionary) -> void:
         # A delayed release from another button must not cancel this action.
         if _held.get(pointer, "") == action:
             _release_pointer(pointer)
+
+func _apply_aim(payload: Dictionary) -> void:
+    var scene: Node = get_tree().current_scene
+    if scene == null:
+        return
+    var hero: Hero = scene.get("player") as Hero
+    if hero == null:
+        return
+    var direction := Vector2(
+        clampf(float(payload.get("x", 0.0)), -1.0, 1.0),
+        clampf(float(payload.get("y", 0.0)), -1.0, 1.0)
+    )
+    if not bool(payload.get("active", true)):
+        direction = Vector2.ZERO
+    hero.set_touch_aim(direction)
 
 func _apply_settings(payload: Dictionary) -> void:
     var scene: Node = get_tree().current_scene
@@ -322,6 +340,11 @@ func _release_all() -> void:
         if InputMap.has_action(str(action)):
             _send_action(str(action), false)
     _held.clear()
+    var scene: Node = get_tree().current_scene
+    if scene != null:
+        var hero: Hero = scene.get("player") as Hero
+        if hero != null:
+            hero.set_touch_aim(Vector2.ZERO)
 
 func _toggle_pause() -> void:
     var scene: Node = get_tree().current_scene
